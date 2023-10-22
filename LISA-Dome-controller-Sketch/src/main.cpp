@@ -9,8 +9,8 @@ WebServer server(80);
 
 const int stepsPerRevolution = 2048;  // change this to fit the number of steps per revolution
 
- const char* ssid     = "RedmiEma";
- const char* password = "APPAMIT0";
+ const char* ssid     = "Mi10TLite";
+ const char* password = "BaDumTss";
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -24,7 +24,22 @@ int displayCounter = -1; //Used to reset display when full
 int rowCounter = 17; //Used to print to the second column correctly
 
 String currentData;
+String FirstRow; 
 
+////////////////////////TEST ZONE//////////////////////////////////
+struct Button {
+	const uint8_t PIN;
+	uint32_t numberKeyPresses;
+	bool pressed;
+};
+
+Button button1 = {3, 0, false};
+
+void IRAM_ATTR isr() {
+	button1.numberKeyPresses++;
+	button1.pressed = true;
+}
+///////////////////////////////////////////////////////////////////
 
 
 void displayMessage (String message){
@@ -49,7 +64,7 @@ void displayMessage (String message){
     //when display is full reset it but printing again the address
     display.clearDisplay();
     display.setCursor(0, 8);
-    display.println(WiFi.localIP());
+    display.println(FirstRow);
     display.println(message);
     display.display(); 
     displayCounter=0;
@@ -111,16 +126,19 @@ void handleUpload() {
 
 void setup()
 {
-    Serial.begin(115200);
-    pinMode(15, OUTPUT);      // set the LED pin mode
-    //Wire.begin(26, 25); // change deafult I2C pins
+  
+  Serial.begin(115200);
+  pinMode(15, OUTPUT);      // set the LED pin mode
+  Wire.begin(33, 35); // change deafult I2C pins
+
+
+  pinMode(button1.PIN, INPUT_PULLUP);
+	attachInterrupt(button1.PIN, isr, CHANGE);
+
 
     // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(int i=0;i<20000;i++){
-      Serial.println("ciao");
-    }; // Don't proceed, loop forever
+    Serial.println(F("SSD1306 allocation failed")); 
     } 
 
   // Show initial display buffer contents on the screen --
@@ -143,29 +161,41 @@ void setup()
 
     WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED) {
+    for (int i = 0; i<12;i++)
+    {
+      if (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
+        displayMessage("......");
+      }
     }
-
-    Serial.println("");
+    
+  if (WiFi.status() == WL_CONNECTED) 
+  {
+    //Blink 3 times to signal wifi connection
+    for (int i=0; i<3; i++){
+      digitalWrite(15, HIGH);
+      delay(200);
+       digitalWrite(15, LOW);
+      delay(100);
+    }
+    FirstRow = "Wifi connected";
+     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
     
 
-    //Blink 3 times to signal wifi connection
-    for (int i=0; i<3; i++){
-      digitalWrite(2, HIGH);
-      delay(200);
-       digitalWrite(2, LOW);
-      delay(100);
-
-    }
+   
     server.on("/", handleRoot);
     server.on("/get", HTTP_GET, handleGet);
     server.on("/post", HTTP_POST, handlePost, handleUpload);
     server.begin();
+  }
+  else{
+    FirstRow="no Wifi";
+  }
+   
     
     
     //Print address for the first time
@@ -173,12 +203,18 @@ void setup()
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0, 8);
-    display.println(WiFi.localIP());
+    display.println(FirstRow);
     display.display(); 
 }
 
 void loop()
 {
-  server.handleClient();
+  //server.handleClient();
+  if (button1.pressed) {
+		Serial.printf("Button has been pressed %u times\n", button1.numberKeyPresses);
+		button1.pressed = false;
+    
+    displayMessage("Test Interrupt");
+	}
 }
 
