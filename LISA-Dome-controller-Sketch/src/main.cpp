@@ -7,14 +7,23 @@
 
 WebServer server(80);
 
-const int stepsPerRevolution = 2048;  // change this to fit the number of steps per revolution
+const char* ssid     = "";
+const char* password = "";
 
- const char* ssid     = "Mi10TLite";
- const char* password = "BaDumTss";
+#define LED_INTEGRATED 15
+#define S1_PIN 3
+#define S2_PIN 4
+#define SCL_PIN 35
+#define SDA_PIN 33
+#define BTT_CW 16
+#define BTT_CCW 18
+#define BTT_RST 37
+#define BTT_END 39 
+
+
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C //Oled Screen Address for initialization
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //initialization of Oled Screen
@@ -23,25 +32,27 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //init
 int displayCounter = -1; //Used to reset display when full
 int rowCounter = 17; //Used to print to the second column correctly
 
-String currentData;
-String FirstRow; 
+String currentData; //Used to hold the latest data from server
+String FirstRow;  //used to hold the string that appears in the first display row
 
 ////////////////////////TEST ZONE//////////////////////////////////
 struct Button {
 	const uint8_t PIN;
 	uint32_t numberKeyPresses;
 	bool pressed;
+  String message;
 };
 
-Button button1 = {3, 0, false};
+Button bttReset = {BTT_RST, 0, false,"RESET POSITION"};
+Button bttClockwise = {BTT_CW, 0, false,"MANUAL CW"};
+Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
 
-void IRAM_ATTR isr() {
-	button1.numberKeyPresses++;
-	button1.pressed = true;
+void IRAM_ATTR isrRST() {
+ bttReset.pressed = true;
 }
 ///////////////////////////////////////////////////////////////////
 
-
+//Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
 void displayMessage (String message){
   
   if (displayCounter < 11){
@@ -77,20 +88,14 @@ void displayMessage (String message){
 void handleRoot() {
   server.send(200, "text/plain", "Ready");
 }
-
-// Reads GET request, for example
-// write http://192.168.0.177/get?data=809 to have 809 degrees movement
 void handleGet() {
   if (server.hasArg("data")) {
     String data = server.arg("data");
 
-    //if the recived data is a number we roteate by that amount
       if (data.toInt()!=0)
       {
         displayMessage (data);
-        //converts data received to int and moves motor
         int degrees = data.toInt();
-       
       }
       Serial.println("Data: " + data);
     
@@ -102,16 +107,13 @@ void handleGet() {
       {
         displayMessage(data);
       }
-    
-    }
-    //TODO: decide if other data type has to be printed or not
+    } 
     server.send(200, "text/plain", "Data Received");
   }
 }
 void handlePost() {
   server.send(200, "text/plain", "Processing Data");
 }
-
 void handleUpload() {
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) {
@@ -128,13 +130,11 @@ void setup()
 {
   
   Serial.begin(115200);
-  pinMode(15, OUTPUT);      // set the LED pin mode
-  Wire.begin(33, 35); // change deafult I2C pins
+  pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
+  pinMode (bttReset.PIN, INPUT_PULLUP);
 
-
-  pinMode(button1.PIN, INPUT_PULLUP);
-	attachInterrupt(button1.PIN, isr, CHANGE);
-
+  attachInterrupt (bttReset.PIN, isrRST, CHANGE);
+  Wire.begin(SDA_PIN, SCL_PIN); 
 
     // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -153,7 +153,7 @@ void setup()
     display.println(ssid);
     display.display();
 
-    // We start by connecting to a WiFi network
+    // start by connecting to a WiFi network
     Serial.println();
     Serial.println();
     Serial.print("Connecting to ");
@@ -174,47 +174,39 @@ void setup()
   {
     //Blink 3 times to signal wifi connection
     for (int i=0; i<3; i++){
-      digitalWrite(15, HIGH);
+      digitalWrite(LED_BUILTIN, HIGH);
       delay(200);
-       digitalWrite(15, LOW);
+       digitalWrite(LED_BUILTIN, LOW);
       delay(100);
     }
     FirstRow = "Wifi connected";
-     Serial.println("");
+    Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-    
-
-   
     server.on("/", handleRoot);
     server.on("/get", HTTP_GET, handleGet);
     server.on("/post", HTTP_POST, handlePost, handleUpload);
     server.begin();
   }
-  else{
-    FirstRow="no Wifi";
-  }
-   
-    
-    
-    //Print address for the first time
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setCursor(0, 8);
-    display.println(FirstRow);
-    display.display(); 
+  else{FirstRow="no Wifi";}
+  
+  //Print address for the first time
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 8);
+  display.println(FirstRow);
+  display.display(); 
 }
 
 void loop()
 {
   //server.handleClient();
-  if (button1.pressed) {
-		Serial.printf("Button has been pressed %u times\n", button1.numberKeyPresses);
-		button1.pressed = false;
-    
-    displayMessage("Test Interrupt");
+  if  (bttReset.pressed) {
+    bttReset.pressed = false;
+    displayMessage(bttReset.message);
 	}
+
 }
 
