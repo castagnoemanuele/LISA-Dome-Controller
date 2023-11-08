@@ -7,35 +7,40 @@
 
 WebServer server(80);
 
-const char* ssid     = "";
-const char* password = "";
+const char* ssid     = "NETGEAR-Guest";
+const char* password = "saibersechiure";
 
 #define LED_INTEGRATED 15
-#define S1_PIN 3
-#define S2_PIN 4
-#define SCL_PIN 35
-#define SDA_PIN 33
-#define BTT_CW 16
-#define BTT_CCW 18
-#define BTT_RST 37
-#define BTT_END 39 
+#define S1_PIN 11
+#define S2_PIN 12
+#define SCL_PIN 39
+#define SDA_PIN 37
+#define BTT_CW 18
+#define BTT_CCW 16
+#define BTT_RST 33
+#define BTT_END 35 
+#define ENCODER1 10
+#define ENCODER2 3
+#define ENCODER3 5
+#define TX 14
+#define RX 13
 
 
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C //Oled Screen Address for initialization
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //initialization of Oled Screen
 
 
-int displayCounter = -1; //Used to reset display when full
-int rowCounter = 17; //Used to print to the second column correctly
+
+
 
 String currentData; //Used to hold the latest data from server
 String FirstRow;  //used to hold the string that appears in the first display row
 
-////////////////////////TEST ZONE//////////////////////////////////
+
 struct Button {
 	const uint8_t PIN;
 	uint32_t numberKeyPresses;
@@ -43,17 +48,27 @@ struct Button {
   String message;
 };
 
-Button bttReset = {BTT_RST, 0, false,"RESET POSITION"};
+Button bttReset = {BTT_RST, 0, false,"RESET"};
 Button bttClockwise = {BTT_CW, 0, false,"MANUAL CW"};
 Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
+Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 
-void IRAM_ATTR isrRST() {
- bttReset.pressed = true;
+/// @brief Interrupt Routine handler, sets .pressed attribute to the reading
+/// @return 
+void IRAM_ATTR isr() {
+  Serial.println("enter isr");
+ bttReset.pressed = digitalRead(BTT_RST);
+ bttClockwise.pressed = digitalRead(BTT_CW);
+ bttCounterClockwise.pressed = digitalRead(BTT_CCW);
+ limitSwitch.pressed = digitalRead(BTT_END);
 }
-///////////////////////////////////////////////////////////////////
 
-//Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
+
+/// @brief Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
+/// @param message 
 void displayMessage (String message){
+  static int displayCounter = -1; //Used to reset display when full
+  static int rowCounter = 17; //Used to print to the second column correctly
   
   if (displayCounter < 11){
     
@@ -82,9 +97,6 @@ void displayMessage (String message){
     rowCounter = 17;
   }
 }
-
-
-
 void handleRoot() {
   server.send(200, "text/plain", "Ready");
 }
@@ -130,16 +142,28 @@ void setup()
 {
   
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
-  pinMode (bttReset.PIN, INPUT_PULLUP);
 
-  attachInterrupt (bttReset.PIN, isrRST, CHANGE);
+  /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
+  pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
+  pinMode (bttReset.PIN, INPUT_PULLDOWN);
+  pinMode (bttClockwise.PIN, INPUT_PULLDOWN);
+  pinMode (bttCounterClockwise.PIN, INPUT_PULLDOWN);
+  pinMode (limitSwitch.PIN, INPUT_PULLUP);
+  pinMode (S1_PIN, OUTPUT);
+  pinMode (S2_PIN,OUTPUT);
+  
+  attachInterrupt (limitSwitch.PIN, isr, CHANGE);
+  attachInterrupt (bttReset.PIN, isr, CHANGE);
+  attachInterrupt (bttClockwise.PIN, isr, CHANGE);
+  attachInterrupt (bttCounterClockwise.PIN, isr, CHANGE);
+  ///////////////////SCREEN INITIALIZATION/////////////////////////////////
   Wire.begin(SDA_PIN, SCL_PIN); 
 
-    // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) 
+  {
     Serial.println(F("SSD1306 allocation failed")); 
-    } 
+  } 
 
   // Show initial display buffer contents on the screen --
   // the library initializes this with an Adafruit splash screen.
@@ -153,6 +177,7 @@ void setup()
     display.println(ssid);
     display.display();
 
+    ////////////////////////////WIFI INITIALIZATION//////////////////////////
     // start by connecting to a WiFi network
     Serial.println();
     Serial.println();
@@ -179,7 +204,7 @@ void setup()
        digitalWrite(LED_BUILTIN, LOW);
       delay(100);
     }
-    FirstRow = "Wifi connected";
+    FirstRow = "connected";
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
@@ -191,22 +216,62 @@ void setup()
   }
   else{FirstRow="no Wifi";}
   
-  //Print address for the first time
+  ///Print address for the first time
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 8);
   display.println(FirstRow);
   display.display(); 
+
+  /////////////////////////ENCODER INITIALIZATION////////////////////////////////
+
+  attachInterrupt(digitalPinToInterrupt(ENCODER1), isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER2), isr, CHANGE);
 }
 
 void loop()
 {
-  //server.handleClient();
+  static float currentPosition; //used to hold dome's position in degrees relative to the end of run
+  
+  
+  //when the reset button is pressed, the motor starts spinning clockwise untile the limit switch stops it
   if  (bttReset.pressed) {
-    bttReset.pressed = false;
     displayMessage(bttReset.message);
+   // bttReset.pressed=false;
+    while(!limitSwitch.pressed){
+      digitalWrite(S1_PIN,HIGH);
+      delay(100);
+    }
+    digitalWrite(S1_PIN,LOW);
+    displayMessage ("END of RUN");
+    currentPosition = 0;
 	}
 
-}
 
+  if(bttClockwise.pressed){
+    displayMessage(bttClockwise.message);
+    while (bttClockwise.pressed)
+    {
+      digitalWrite(S1_PIN, HIGH);
+      delay(100);
+
+    }
+    digitalWrite(S1_PIN, LOW);
+    delay(100);
+  }
+
+  if(bttCounterClockwise.pressed){
+    displayMessage(bttCounterClockwise.message);
+    while (bttCounterClockwise.pressed)
+    {
+      digitalWrite(S2_PIN, HIGH);
+      delay(100);
+    }
+    digitalWrite(S2_PIN, LOW);
+    delay(100);
+  }
+  /////////////////////////////////////////////////////////////
+   
+  //server.handleClient(); for future remote control features
+}
