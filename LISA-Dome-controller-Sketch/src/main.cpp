@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Preferences.h>
 
 WebServer server(80);
 
@@ -56,11 +57,78 @@ Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 /// @brief Interrupt Routine handler, sets .pressed attribute to the reading
 /// @return 
 void IRAM_ATTR isr() {
-  Serial.println("enter isr");
  bttReset.pressed = digitalRead(BTT_RST);
  bttClockwise.pressed = digitalRead(BTT_CW);
  bttCounterClockwise.pressed = digitalRead(BTT_CCW);
  limitSwitch.pressed = digitalRead(BTT_END);
+}
+
+enum Direction {
+  UNKNOWN,
+  CW,
+  CCW,
+};
+
+struct Encoder {
+	int currentPosition;
+  bool hasChanged;
+
+  int oldSector;
+  int newSector;
+
+  Direction direction;
+  //bool status[3];
+};
+
+Encoder encoder = {0,false,0,0,UNKNOWN};
+
+void IRAM_ATTR isr2() {
+  encoder.hasChanged=true;
+}
+/// @brief Handles encoder Data
+void checkEncoder(){
+  if(encoder.oldSector!=encoder.newSector){
+  encoder.oldSector=encoder.newSector;}
+  if(digitalRead(ENCODER1)==HIGH){
+    encoder.newSector=1;
+  }
+  if(digitalRead(ENCODER2)==HIGH){
+    encoder.newSector=2;
+  }
+  if(digitalRead(ENCODER3)==HIGH){
+    encoder.newSector=3;
+  }
+  encoder.hasChanged=false;
+
+  /////////DETECT DIRECTION////////
+  switch (encoder.newSector){
+    case 1:
+    if (encoder.oldSector==2){
+      encoder.direction=CCW;
+    }
+    if (encoder.oldSector==1){
+      encoder.direction=CW;
+    }
+    break;
+    case 2:
+    if (encoder.oldSector==3){
+      encoder.direction=CCW;
+    }
+    if (encoder.oldSector==1){
+      encoder.direction=CW;
+    }
+    break;
+    case 3:
+    if (encoder.oldSector==1){
+      encoder.direction=CCW;
+    }
+    if (encoder.oldSector==2){
+      encoder.direction=CW;
+    }
+    break;
+  }
+
+  
 }
 
 
@@ -225,9 +293,12 @@ void setup()
   display.display(); 
 
   /////////////////////////ENCODER INITIALIZATION////////////////////////////////
-
-  attachInterrupt(digitalPinToInterrupt(ENCODER1), isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER2), isr, CHANGE);
+  pinMode(ENCODER1, INPUT_PULLDOWN);
+  pinMode(ENCODER2, INPUT_PULLDOWN);
+  pinMode(ENCODER3, INPUT_PULLDOWN);
+  attachInterrupt(digitalPinToInterrupt(ENCODER1), isr2, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER2), isr2, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER3), isr2, RISING);
 }
 
 void loop()
@@ -254,11 +325,13 @@ void loop()
     while (bttClockwise.pressed)
     {
       digitalWrite(S1_PIN, HIGH);
+      digitalWrite(LED_BUILTIN,HIGH);
       delay(100);
 
     }
     digitalWrite(S1_PIN, LOW);
     delay(100);
+    digitalWrite(LED_BUILTIN,LOW);
   }
 
   if(bttCounterClockwise.pressed){
@@ -266,12 +339,33 @@ void loop()
     while (bttCounterClockwise.pressed)
     {
       digitalWrite(S2_PIN, HIGH);
+      digitalWrite(LED_BUILTIN,HIGH);
       delay(100);
     }
     digitalWrite(S2_PIN, LOW);
     delay(100);
+    digitalWrite(LED_BUILTIN,LOW);
   }
+  //
+  
   /////////////////////////////////////////////////////////////
-   
+   if(encoder.hasChanged){
+    checkEncoder();
+    if(encoder.newSector!=encoder.oldSector){
+    displayMessage((String)encoder.oldSector);
+    displayMessage((String)encoder.newSector);
+    displayMessage((String)encoder.direction);
+    displayMessage("         ");
+    //////////////UPDATE POSITION////////////////
+  if (encoder.direction==CW){
+    encoder.currentPosition++;
+  }
+  else 
+  if (encoder.direction==CCW){
+    encoder.currentPosition--;
+  }
+  Serial.println(encoder.currentPosition);
+    }
+   }
   //server.handleClient(); for future remote control features
 }
