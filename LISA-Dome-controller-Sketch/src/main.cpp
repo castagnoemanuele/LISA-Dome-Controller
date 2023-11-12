@@ -6,6 +6,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 
+Preferences preferences;
 WebServer server(80);
 
 const char* ssid     = "NETGEAR-Guest";
@@ -25,7 +26,6 @@ const char* password = "saibersechiure";
 #define ENCODER3 5
 #define TX 14
 #define RX 13
-
 
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -210,7 +210,7 @@ void setup()
 {
   
   Serial.begin(115200);
-
+  
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
   pinMode (bttReset.PIN, INPUT_PULLDOWN);
@@ -299,19 +299,30 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(ENCODER1), isr2, RISING);
   attachInterrupt(digitalPinToInterrupt(ENCODER2), isr2, RISING);
   attachInterrupt(digitalPinToInterrupt(ENCODER3), isr2, RISING);
+
+  ////////////////////////READ OLD VALUE FROM EPROM//////////////////////////////
+  preferences.begin("LISA", true); //start preferences in readonly mode
+  encoder.currentPosition = preferences.getFloat("position", 0);
+  Serial.print("Current position: ");
+  Serial.println(encoder.currentPosition);
+  preferences.end();
+
 }
 
 void loop()
 {
   static float currentPosition; //used to hold dome's position in degrees relative to the end of run
   
-  
+  if(limitSwitch.pressed){
+    encoder.currentPosition=0;
+  }
   //when the reset button is pressed, the motor starts spinning clockwise untile the limit switch stops it
   if  (bttReset.pressed) {
     displayMessage(bttReset.message);
    // bttReset.pressed=false;
     while(!limitSwitch.pressed){
       digitalWrite(S1_PIN,HIGH);
+      
       delay(100);
     }
     digitalWrite(S1_PIN,LOW);
@@ -326,6 +337,7 @@ void loop()
     {
       digitalWrite(S1_PIN, HIGH);
       digitalWrite(LED_BUILTIN,HIGH);
+    
       delay(100);
 
     }
@@ -353,19 +365,21 @@ void loop()
     checkEncoder();
     if(encoder.newSector!=encoder.oldSector){
     displayMessage((String)encoder.oldSector);
-    displayMessage((String)encoder.newSector);
-    displayMessage((String)encoder.direction);
+    //displayMessage((String)encoder.newSector);
+    //displayMessage((String)encoder.direction);
     displayMessage("         ");
+    FirstRow=(String)encoder.currentPosition;
     //////////////UPDATE POSITION////////////////
-  if (encoder.direction==CW){
-    encoder.currentPosition++;
-  }
-  else 
-  if (encoder.direction==CCW){
-    encoder.currentPosition--;
-  }
-  Serial.println(encoder.currentPosition);
+    if (encoder.direction==CW){
+      encoder.currentPosition++;
+    }
+    else if (encoder.direction==CCW){
+      encoder.currentPosition--;
+    }
+      Serial.println(encoder.currentPosition);
     }
    }
   //server.handleClient(); for future remote control features
+
+  
 }
