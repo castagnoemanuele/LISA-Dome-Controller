@@ -42,6 +42,7 @@ String currentData; //Used to hold the latest data from server
 String FirstRow;  //used to hold the string that appears in the first display row
 
 
+
 struct Button {
 	const uint8_t PIN;
 	uint32_t numberKeyPresses;
@@ -72,7 +73,7 @@ enum Direction {
 struct Encoder {
 	int currentPosition;
   bool hasChanged;
-
+  int fullRotation; ///number of encoder rotation corresponding to a full rotation of the dome
   int oldSector;
   int newSector;
 
@@ -85,6 +86,22 @@ Encoder encoder = {0,false,0,0,UNKNOWN};
 void IRAM_ATTR isr2() {
   encoder.hasChanged=true;
 }
+
+bool dataSaveNecessary=false;
+hw_timer_t *My_timer = NULL;
+void IRAM_ATTR onTimer(){
+  dataSaveNecessary=true;
+}
+
+/// @brief updates the value of the dome's position every 5 minutes, called by a timer
+void saveData (){
+  preferences.begin("LISA", true); //start preferences in readonly mode
+  encoder.currentPosition = preferences.putFloat("position", encoder.currentPosition);
+  Serial.print("New position saved to EPROM:");
+  Serial.print(encoder.currentPosition);
+  preferences.end();
+}
+
 /// @brief Handles encoder Data
 void checkEncoder(){
   if(encoder.oldSector!=encoder.newSector){
@@ -303,9 +320,17 @@ void setup()
   ////////////////////////READ OLD VALUE FROM EPROM//////////////////////////////
   preferences.begin("LISA", true); //start preferences in readonly mode
   encoder.currentPosition = preferences.getFloat("position", 0);
+  encoder.fullRotation= preferences.getInt("fullRotation",0);
   Serial.print("Current position: ");
   Serial.println(encoder.currentPosition);
+  Serial.println(encoder.fullRotation);
   preferences.end();
+
+  ////////////////////////////TIMER FOR SAVING DATA/////////////////////////////
+  My_timer = timerBegin(0, 8000, true);
+  timerAttachInterrupt(My_timer, &onTimer, true);
+  timerAlarmWrite(My_timer, 3000000, true); //setting a timer to save encoder data to EPROM every 5 minutes
+  timerAlarmEnable(My_timer); //Just Enable
 
 }
 
@@ -381,5 +406,10 @@ void loop()
    }
   //server.handleClient(); for future remote control features
 
+  if(dataSaveNecessary){
+    saveData();
+    dataSaveNecessary=false;
+    displayMessage("Position Saved");
+  }
   
 }
