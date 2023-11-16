@@ -38,7 +38,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //init
 
 
 
-String currentData; //Used to hold the latest data from server
+String currentData; //Used to hold the l needUpdate data from server
 String FirstRow;  //used to hold the string that appears in the first display row
 
 
@@ -55,6 +55,7 @@ Button bttClockwise = {BTT_CW, 0, false,"MANUAL CW"};
 Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
 Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 
+bool needUpdate = false;
 /// @brief Interrupt Routine handler, sets .pressed attribute to the reading
 /// @return 
 void IRAM_ATTR isr() {
@@ -62,6 +63,7 @@ void IRAM_ATTR isr() {
  bttClockwise.pressed = digitalRead(BTT_CW);
  bttCounterClockwise.pressed = digitalRead(BTT_CCW);
  limitSwitch.pressed = digitalRead(BTT_END);
+ needUpdate= true;
 }
 
 enum Direction {
@@ -95,11 +97,28 @@ void IRAM_ATTR onTimer(){
 
 /// @brief updates the value of the dome's position every 5 minutes, called by a timer
 void saveData (){
-  preferences.begin("LISA", true); //start preferences in readonly mode
+  preferences.begin("LISA", false); 
   encoder.currentPosition = preferences.putFloat("position", encoder.currentPosition);
   Serial.print("New position saved to EPROM:");
   Serial.print(encoder.currentPosition);
   preferences.end();
+}
+/// @brief call this function to disable all controls and wait for the dome to return to the original position
+void resetPosition(){
+   // bttReset.pressed=false;
+    while(!limitSwitch.pressed){
+      //check if we need a clockwise or counterclockwise rotation to get to the limit switch faster
+      if(encoder.currentPosition<0){ 
+        digitalWrite(S1_PIN,HIGH);
+      } else if (encoder.currentPosition>0){
+        digitalWrite(S2_PIN,HIGH);
+      }
+      delay(100);
+    }
+    digitalWrite(S1_PIN,LOW);
+    digitalWrite(S2_PIN,LOW);
+    
+    encoder.currentPosition = 0;
 }
 
 /// @brief Handles encoder Data
@@ -150,7 +169,7 @@ void checkEncoder(){
 
 
 /// @brief Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
-/// @param message 
+/// @param message string to be displayed in the log columns
 void displayMessage (String message){
   static int displayCounter = -1; //Used to reset display when full
   static int rowCounter = 17; //Used to print to the second column correctly
@@ -174,6 +193,8 @@ void displayMessage (String message){
   else {
     //when display is full reset it but printing again the address
     display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println(WiFi.localIP());
     display.setCursor(0, 8);
     display.println(FirstRow);
     display.println(message);
@@ -225,9 +246,7 @@ void handleUpload() {
 
 void setup()
 {
-  
-  Serial.begin(115200);
-  
+  Serial.begin(115200); 
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
   pinMode (bttReset.PIN, INPUT_PULLDOWN);
@@ -289,7 +308,8 @@ void setup()
        digitalWrite(LED_BUILTIN, LOW);
       delay(100);
     }
-    FirstRow = "connected";
+    
+    FirstRow = "Connected" + (String)WiFi.localIP();
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
@@ -312,7 +332,7 @@ void setup()
   /////////////////////////ENCODER INITIALIZATION////////////////////////////////
   pinMode(ENCODER1, INPUT_PULLDOWN);
   pinMode(ENCODER2, INPUT_PULLDOWN);
-  pinMode(ENCODER3, INPUT_PULLDOWN);
+  pinMode(ENCODER3, INPUT_PULLDOWN); 
   attachInterrupt(digitalPinToInterrupt(ENCODER1), isr2, RISING);
   attachInterrupt(digitalPinToInterrupt(ENCODER2), isr2, RISING);
   attachInterrupt(digitalPinToInterrupt(ENCODER3), isr2, RISING);
@@ -323,6 +343,7 @@ void setup()
   encoder.fullRotation= preferences.getInt("fullRotation",0);
   Serial.print("Current position: ");
   Serial.println(encoder.currentPosition);
+  Serial.print("Number of encoder clicks for a full rotation: ");
   Serial.println(encoder.fullRotation);
   preferences.end();
 
@@ -336,62 +357,36 @@ void setup()
 
 void loop()
 {
-  static float currentPosition; //used to hold dome's position in degrees relative to the end of run
-  
   if(limitSwitch.pressed){
     encoder.currentPosition=0;
   }
   //when the reset button is pressed, the motor starts spinning clockwise untile the limit switch stops it
   if  (bttReset.pressed) {
     displayMessage(bttReset.message);
-   // bttReset.pressed=false;
-    while(!limitSwitch.pressed){
-      digitalWrite(S1_PIN,HIGH);
-      
-      delay(100);
-    }
-    digitalWrite(S1_PIN,LOW);
+    resetPosition();
     displayMessage ("END of RUN");
-    currentPosition = 0;
 	}
 
+  digitalWrite(S1_PIN, bttClockwise.pressed);
+  digitalWrite(LED_BUILTIN, bttClockwise.pressed);
 
-  if(bttClockwise.pressed){
+  if(bttClockwise.pressed & needUpdate){
     displayMessage(bttClockwise.message);
-    while (bttClockwise.pressed)
-    {
-      digitalWrite(S1_PIN, HIGH);
-      digitalWrite(LED_BUILTIN,HIGH);
-    
-      delay(100);
-
-    }
-    digitalWrite(S1_PIN, LOW);
-    delay(100);
-    digitalWrite(LED_BUILTIN,LOW);
+   needUpdate = false;
   }
 
-  if(bttCounterClockwise.pressed){
+  digitalWrite(S2_PIN, bttCounterClockwise.pressed);
+  digitalWrite(LED_BUILTIN, bttCounterClockwise.pressed);
+  if(bttCounterClockwise.pressed & needUpdate){
     displayMessage(bttCounterClockwise.message);
-    while (bttCounterClockwise.pressed)
-    {
-      digitalWrite(S2_PIN, HIGH);
-      digitalWrite(LED_BUILTIN,HIGH);
-      delay(100);
-    }
-    digitalWrite(S2_PIN, LOW);
-    delay(100);
-    digitalWrite(LED_BUILTIN,LOW);
+    needUpdate = false;
   }
-  //
   
   /////////////////////////////////////////////////////////////
    if(encoder.hasChanged){
     checkEncoder();
     if(encoder.newSector!=encoder.oldSector){
     displayMessage((String)encoder.oldSector);
-    //displayMessage((String)encoder.newSector);
-    //displayMessage((String)encoder.direction);
     displayMessage("         ");
     FirstRow=(String)encoder.currentPosition;
     //////////////UPDATE POSITION////////////////
@@ -405,11 +400,11 @@ void loop()
     }
    }
   //server.handleClient(); for future remote control features
-
+  ////////////////DATA SAVE//////////////////////////////
   if(dataSaveNecessary){
     saveData();
     dataSaveNecessary=false;
-    displayMessage("Position Saved");
+    displayMessage("POS SAVE");
   }
   
 }
