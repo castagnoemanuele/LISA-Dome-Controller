@@ -6,6 +6,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Preferences.h>
 
+
 Preferences preferences;
 WebServer server(80);
 
@@ -246,7 +247,9 @@ void handleUpload() {
 
 void setup()
 {
-  Serial.begin(115200); 
+  ////////////////////////SERIAL COMMUNICATION INIT/////////////////////
+  Serial.begin(9600); 
+  Serial1.begin(9600,SERIAL_8N1,TX,RX); ///serial port to communicate with telescope
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
   pinMode (bttReset.PIN, INPUT_PULLDOWN);
@@ -290,6 +293,7 @@ void setup()
 
     WiFi.begin(ssid, password);
 
+    ///Wait for Connection while also printing on the display
     for (int i = 0; i<12;i++)
     {
       if (WiFi.status() != WL_CONNECTED) {
@@ -309,7 +313,7 @@ void setup()
       delay(100);
     }
     
-    FirstRow = "Connected" + (String)WiFi.localIP();
+    FirstRow = "Connected! ";
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
@@ -327,6 +331,7 @@ void setup()
   display.setTextColor(WHITE);
   display.setCursor(0, 8);
   display.println(FirstRow);
+  display.print(WiFi.localIP());
   display.display(); 
 
   /////////////////////////ENCODER INITIALIZATION////////////////////////////////
@@ -352,6 +357,7 @@ void setup()
   timerAttachInterrupt(My_timer, &onTimer, true);
   timerAlarmWrite(My_timer, 3000000, true); //setting a timer to save encoder data to EPROM every 5 minutes
   timerAlarmEnable(My_timer); //Just Enable
+
 
 }
 
@@ -405,6 +411,25 @@ void loop()
     saveData();
     dataSaveNecessary=false;
     displayMessage("POS SAVE");
+  }
+//////////////////////SERIAL COMM TEST/////////////////////////////
+  while (Serial1.available() > 0) {
+    char inByte = Serial1.read();
+    Serial.write(inByte);
+    Serial1.write(inByte);
+    displayMessage(String(inByte));
+    //Serial.end();
+    Serial.println("closed serial - thou shall not see me");
+    if(Serial1.availableForWrite()){
+      Serial.println("Writing on serial1");
+      Serial1.println("test");
+    }
+    
+    Serial.begin(9600);
+  }
+  if (Serial1.availableForWrite()){
+    
+    Serial1.write("s");
   }
   
 }
