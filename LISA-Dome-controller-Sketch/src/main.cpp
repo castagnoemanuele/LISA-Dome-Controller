@@ -35,14 +35,10 @@ const char* password = "saibersechiure";
 #define SCREEN_ADDRESS 0x3C //Oled Screen Address for initialization
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //initialization of Oled Screen
 
-
-
-
-
 String currentData; //Used to hold the l needUpdate data from server
 String FirstRow;  //used to hold the string that appears in the first display row
 
-
+char telescopePosition[]={0,0,':',0,0,':',0,0,};
 
 struct Button {
 	const uint8_t PIN;
@@ -168,6 +164,14 @@ void checkEncoder(){
   
 }
 
+void checkTelescopePosition() {
+  if(Serial1.availableForWrite()){
+    //Ask the telescope for the Right Ascension
+    Serial1.println(":GR#");
+    //Listen on the Serial1 for the answer and save it
+    Serial1.readBytesUntil('#',telescopePosition,8);
+  }
+}
 
 /// @brief Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
 /// @param message string to be displayed in the log columns
@@ -418,18 +422,7 @@ void loop()
     Serial.write(inByte);
     Serial1.write(inByte);
     displayMessage(String(inByte));
-    //Serial.end();
-    Serial.println("closed serial - thou shall not see me");
-    if(Serial1.availableForWrite()){
-      Serial.println("Writing on serial1");
-      Serial1.println("test");
-    }
-    
-    Serial.begin(9600);
   }
-  if (Serial1.availableForWrite()){
-    
-    Serial1.write("s");
-  }
+  
   
 }
