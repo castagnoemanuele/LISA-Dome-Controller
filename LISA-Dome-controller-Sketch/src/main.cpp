@@ -5,6 +5,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Preferences.h>
+#include <encoder.h>
+#include <config.h>
 
 
 Preferences preferences;
@@ -13,26 +15,8 @@ WebServer server(80);
 const char* ssid     = "NETGEAR-Guest";
 const char* password = "saibersechiure";
 
-#define LED_INTEGRATED 15
-#define S1_PIN 11
-#define S2_PIN 12
-#define SCL_PIN 39
-#define SDA_PIN 37
-#define BTT_CW 18
-#define BTT_CCW 16
-#define BTT_RST 33
-#define BTT_END 35 
-#define ENCODER1 10
-#define ENCODER2 3
-#define ENCODER3 5
-#define TX 14
-#define RX 13
+Encoder encoder = {0,false,0,0,UNKNOWN};
 
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C //Oled Screen Address for initialization
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //initialization of Oled Screen
 
 String currentData; //Used to hold the l needUpdate data from server
@@ -63,29 +47,9 @@ void IRAM_ATTR isr() {
  needUpdate= true;
 }
 
-enum Direction {
-  UNKNOWN,
-  CW,
-  CCW,
-};
-
-struct Encoder {
-	int currentPosition;
-  bool hasChanged;
-  int fullRotation; ///number of encoder rotation corresponding to a full rotation of the dome
-  int oldSector;
-  int newSector;
-
-  Direction direction;
-  //bool status[3];
-};
-
-Encoder encoder = {0,false,0,0,UNKNOWN};
-
 void IRAM_ATTR isr2() {
   encoder.hasChanged=true;
 }
-
 bool dataSaveNecessary=false;
 hw_timer_t *My_timer = NULL;
 void IRAM_ATTR onTimer(){
@@ -117,60 +81,63 @@ void resetPosition(){
     
     encoder.currentPosition = 0;
 }
-
-/// @brief Handles encoder Data
-void checkEncoder(){
-  if(encoder.oldSector!=encoder.newSector){
-  encoder.oldSector=encoder.newSector;}
-  if(digitalRead(ENCODER1)==HIGH){
-    encoder.newSector=1;
-  }
-  if(digitalRead(ENCODER2)==HIGH){
-    encoder.newSector=2;
-  }
-  if(digitalRead(ENCODER3)==HIGH){
-    encoder.newSector=3;
-  }
-  encoder.hasChanged=false;
-
-  /////////DETECT DIRECTION////////
-  switch (encoder.newSector){
-    case 1:
-    if (encoder.oldSector==2){
-      encoder.direction=CCW;
-    }
-    if (encoder.oldSector==1){
-      encoder.direction=CW;
-    }
-    break;
-    case 2:
-    if (encoder.oldSector==3){
-      encoder.direction=CCW;
-    }
-    if (encoder.oldSector==1){
-      encoder.direction=CW;
-    }
-    break;
-    case 3:
-    if (encoder.oldSector==1){
-      encoder.direction=CCW;
-    }
-    if (encoder.oldSector==2){
-      encoder.direction=CW;
-    }
-    break;
-  }
-
-  
-}
-
+/// @brief Print telescope position and save it
 void checkTelescopePosition() {
   if(Serial1.availableForWrite()){
     //Ask the telescope for the Right Ascension
     Serial1.println(":GR#");
     //Listen on the Serial1 for the answer and save it
     Serial1.readBytesUntil('#',telescopePosition,8);
+
+    //missing code for conversion and saving of the telescope position
   }
+}
+
+
+/// @brief Handles encoder Data
+void checkEncoder(Encoder encoder1){
+  if(encoder1.oldSector!=encoder1.newSector){
+  encoder1.oldSector=encoder1.newSector;}
+  if(digitalRead(ENCODER1)==HIGH){
+    encoder1.newSector=1;
+  }
+  if(digitalRead(ENCODER2)==HIGH){
+    encoder1.newSector=2;
+  }
+  if(digitalRead(ENCODER3)==HIGH){
+    encoder1.newSector=3;
+  }
+  encoder1.hasChanged=false;
+
+  /////////DETECT DIRECTION////////
+  switch (encoder1.newSector){
+    case 1:
+    if (encoder1.oldSector==2){
+      encoder1.direction=CCW;
+    }
+    if (encoder1.oldSector==1){
+      encoder1.direction=CW;
+    }
+    break;
+    case 2:
+    if (encoder1.oldSector==3){
+      encoder1.direction=CCW;
+    }
+    if (encoder1.oldSector==1){
+      encoder1.direction=CW;
+    }
+    break;
+    case 3:
+    if (encoder1.oldSector==1){
+      encoder1.direction=CCW;
+    }
+    if (encoder1.oldSector==2){
+      encoder1.direction=CW;
+    }
+    break;
+  }
+
+  
 }
 
 /// @brief Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
@@ -394,7 +361,7 @@ void loop()
   
   /////////////////////////////////////////////////////////////
    if(encoder.hasChanged){
-    checkEncoder();
+    checkEncoder(encoder);
     if(encoder.newSector!=encoder.oldSector){
     displayMessage((String)encoder.oldSector);
     displayMessage("         ");
