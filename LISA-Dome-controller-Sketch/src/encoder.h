@@ -20,6 +20,10 @@ struct Encoder {
 };
 
 
+/// @brief Handles encoder Data
+void checkEncoder(Encoder encoder1);
+
+
 
 
 

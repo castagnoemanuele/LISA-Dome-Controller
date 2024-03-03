@@ -7,13 +7,12 @@
 #include <Preferences.h>
 #include <encoder.h>
 #include <config.h>
+#include <WiFiManager.h>
 
 
 Preferences preferences;
 WebServer server(80);
 
-const char* ssid     = "NETGEAR-Guest";
-const char* password = "saibersechiure";
 
 Encoder encoder = {0,false,0,0,UNKNOWN};
 
@@ -27,7 +26,7 @@ char telescopePosition[]={0,0,':',0,0,':',0,0,};
 struct Button {
 	const uint8_t PIN;
 	uint32_t numberKeyPresses;
-	bool pressed;
+	bool pressed; 
   String message;
 };
 
@@ -94,51 +93,6 @@ void checkTelescopePosition() {
 }
 
 
-/// @brief Handles encoder Data
-void checkEncoder(Encoder encoder1){
-  if(encoder1.oldSector!=encoder1.newSector){
-  encoder1.oldSector=encoder1.newSector;}
-  if(digitalRead(ENCODER1)==HIGH){
-    encoder1.newSector=1;
-  }
-  if(digitalRead(ENCODER2)==HIGH){
-    encoder1.newSector=2;
-  }
-  if(digitalRead(ENCODER3)==HIGH){
-    encoder1.newSector=3;
-  }
-  encoder1.hasChanged=false;
-
-  /////////DETECT DIRECTION////////
-  switch (encoder1.newSector){
-    case 1:
-    if (encoder1.oldSector==2){
-      encoder1.direction=CCW;
-    }
-    if (encoder1.oldSector==1){
-      encoder1.direction=CW;
-    }
-    break;
-    case 2:
-    if (encoder1.oldSector==3){
-      encoder1.direction=CCW;
-    }
-    if (encoder1.oldSector==1){
-      encoder1.direction=CW;
-    }
-    break;
-    case 3:
-    if (encoder1.oldSector==1){
-      encoder1.direction=CCW;
-    }
-    if (encoder1.oldSector==2){
-      encoder1.direction=CW;
-    }
-    break;
-  }
-
-  
-}
 
 /// @brief Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
 /// @param message string to be displayed in the log columns
@@ -220,7 +174,7 @@ void setup()
 {
   ////////////////////////SERIAL COMMUNICATION INIT/////////////////////
   Serial.begin(9600); 
-  Serial1.begin(9600,SERIAL_8N1,TX,RX); ///serial port to communicate with telescope
+  Serial1.begin(9600,SERIAL_8N1,TX_PIN,RX_PIN); ///serial port to communicate with telescope
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
   pinMode (bttReset.PIN, INPUT_PULLDOWN);
@@ -251,28 +205,26 @@ void setup()
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(0, 0);
-    display.println("Connecting to:");
-    display.println(ssid);
+    // display.println("Connecting to:");
+    // display.println(ssid);
     display.display();
 
     ////////////////////////////WIFI INITIALIZATION//////////////////////////
     // start by connecting to a WiFi network
-    Serial.println();
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.begin(ssid, password);
+    WiFiManager wifiManager; //REMOVED AFTER INITIAL SETUP
+    //wifiManager.resetSettings(); //TO CLEAN SETTINGS
+    wifiManager.autoConnect("AutoConnectAP");
+    
 
     ///Wait for Connection while also printing on the display
-    for (int i = 0; i<12;i++)
-    {
-      if (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-        displayMessage("......");
-      }
-    }
+    // for (int i = 0; i<12;i++)
+    // {
+    //   if (WiFi.status() != WL_CONNECTED) {
+    //     delay(500);
+    //     Serial.print(".");
+    //     displayMessage("......");
+    //   }
+    // }
     
   if (WiFi.status() == WL_CONNECTED) 
   {
@@ -337,13 +289,13 @@ void loop()
   if(limitSwitch.pressed){
     encoder.currentPosition=0;
   }
-  //when the reset button is pressed, the motor starts spinning clockwise untile the limit switch stops it
+  //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
   if  (bttReset.pressed) {
     displayMessage(bttReset.message);
     resetPosition();
     displayMessage ("END of RUN");
 	}
-
+//turn on relays according to the button status
   digitalWrite(S1_PIN, bttClockwise.pressed);
   digitalWrite(LED_BUILTIN, bttClockwise.pressed);
 
@@ -351,7 +303,6 @@ void loop()
     displayMessage(bttClockwise.message);
    needUpdate = false;
   }
-
   digitalWrite(S2_PIN, bttCounterClockwise.pressed);
   digitalWrite(LED_BUILTIN, bttCounterClockwise.pressed);
   if(bttCounterClockwise.pressed & needUpdate){

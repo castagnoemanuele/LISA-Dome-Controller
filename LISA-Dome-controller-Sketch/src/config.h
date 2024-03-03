@@ -11,8 +11,8 @@
 #define ENCODER1 10
 #define ENCODER2 3
 #define ENCODER3 5
-#define TX 14
-#define RX 13
+#define TX_PIN 14
+#define RX_PIN 13
 
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
