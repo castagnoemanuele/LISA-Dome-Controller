@@ -36,7 +36,7 @@ Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
 Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 
 bool needUpdate = false;
-/// @brief Interrupt Routine handler, sets .pressed attribute to the reading
+/// @brief Interrupt Routine handler, sets .pressed attribute according to the reading
 /// @return 
 void IRAM_ATTR isr() {
  bttReset.pressed = digitalRead(BTT_RST);
@@ -46,11 +46,17 @@ void IRAM_ATTR isr() {
  needUpdate= true;
 }
 
+
 void IRAM_ATTR isr2() {
   encoder.hasChanged=true;
 }
+
+
 bool dataSaveNecessary=false;
 hw_timer_t *My_timer = NULL;
+
+/// @brief Interrupt Routine handler, Checks the timer to save the position periodically
+/// @return 
 void IRAM_ATTR onTimer(){
   dataSaveNecessary=true;
 }
@@ -60,9 +66,10 @@ void saveData (){
   preferences.begin("LISA", false); 
   encoder.currentPosition = preferences.putFloat("position", encoder.currentPosition);
   Serial.print("New position saved to EPROM:");
-  Serial.print(encoder.currentPosition);
+  Serial.println(encoder.currentPosition);
   preferences.end();
 }
+
 /// @brief call this function to disable all controls and wait for the dome to return to the original position
 void resetPosition(){
    // bttReset.pressed=false;
@@ -211,9 +218,9 @@ void setup()
 
     ////////////////////////////WIFI INITIALIZATION//////////////////////////
     // start by connecting to a WiFi network
-    WiFiManager wifiManager; //REMOVED AFTER INITIAL SETUP
+    //WiFiManager wifiManager; //REMOVED AFTER INITIAL SETUP
     //wifiManager.resetSettings(); //TO CLEAN SETTINGS
-    wifiManager.autoConnect("AutoConnectAP");
+    //wifiManager.autoConnect("AutoConnectAP");
     
 
     ///Wait for Connection while also printing on the display
@@ -314,16 +321,17 @@ void loop()
    if(encoder.hasChanged){
     checkEncoder(encoder);
     if(encoder.newSector!=encoder.oldSector){
-    displayMessage((String)encoder.oldSector);
-    displayMessage("         ");
-    FirstRow=(String)encoder.currentPosition;
-    //////////////UPDATE POSITION////////////////
-    if (encoder.direction==CW){
-      encoder.currentPosition++;
-    }
-    else if (encoder.direction==CCW){
-      encoder.currentPosition--;
-    }
+      displayMessage((String)encoder.oldSector);
+      displayMessage("         ");
+      FirstRow=(String)encoder.currentPosition;
+      Serial.println(encoder.newSector);
+      /////////////UPDATE POSITION////////////////
+      if (encoder.direction==CW){
+        encoder.currentPosition++;
+      }
+      else if (encoder.direction==CCW){
+        encoder.currentPosition--;
+      }
       Serial.println(encoder.currentPosition);
     }
    }
