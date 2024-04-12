@@ -4,10 +4,12 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <Preferences.h>
 #include <encoder.h>
 #include <config.h>
 #include <WiFiManager.h>
+#include <telescope.h>
+#include <button.h>
+#include <Preferences.h>
 
 
 Preferences preferences;
@@ -21,19 +23,14 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //init
 String currentData; //Used to hold the l needUpdate data from server
 String FirstRow;  //used to hold the string that appears in the first display row
 
-char telescopePosition[]={0,0,':',0,0,':',0,0,};
 
-struct Button {
-	const uint8_t PIN;
-	uint32_t numberKeyPresses;
-	bool pressed; 
-  String message;
-};
+
 
 Button bttReset = {BTT_RST, 0, false,"RESET"};
 Button bttClockwise = {BTT_CW, 0, false,"MANUAL CW"};
 Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
 Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
+
 
 bool needUpdate = false;
 /// @brief Interrupt Routine handler, sets .pressed attribute according to the reading
@@ -47,7 +44,7 @@ void IRAM_ATTR isr() {
 }
 
 
-void IRAM_ATTR isr2() {
+void IRAM_ATTR encoderTick() {
   encoder.hasChanged=true;
 }
 
@@ -61,43 +58,8 @@ void IRAM_ATTR onTimer(){
   dataSaveNecessary=true;
 }
 
-/// @brief updates the value of the dome's position every 5 minutes, called by a timer
-void saveData (){
-  preferences.begin("LISA", false); 
-  encoder.currentPosition = preferences.putFloat("position", encoder.currentPosition);
-  Serial.print("New position saved to EPROM:");
-  Serial.println(encoder.currentPosition);
-  preferences.end();
-}
 
-/// @brief call this function to disable all controls and wait for the dome to return to the original position
-void resetPosition(){
-   // bttReset.pressed=false;
-    while(!limitSwitch.pressed){
-      //check if we need a clockwise or counterclockwise rotation to get to the limit switch faster
-      if(encoder.currentPosition<0){ 
-        digitalWrite(S1_PIN,HIGH);
-      } else if (encoder.currentPosition>0){
-        digitalWrite(S2_PIN,HIGH);
-      }
-      delay(100);
-    }
-    digitalWrite(S1_PIN,LOW);
-    digitalWrite(S2_PIN,LOW);
-    
-    encoder.currentPosition = 0;
-}
-/// @brief Print telescope position and save it
-void checkTelescopePosition() {
-  if(Serial1.availableForWrite()){
-    //Ask the telescope for the Right Ascension
-    Serial1.println(":GR#");
-    //Listen on the Serial1 for the answer and save it
-    Serial1.readBytesUntil('#',telescopePosition,8);
 
-    //missing code for conversion and saving of the telescope position
-  }
-}
 
 
 
@@ -268,9 +230,9 @@ void setup()
   pinMode(ENCODER1, INPUT_PULLDOWN);
   pinMode(ENCODER2, INPUT_PULLDOWN);
   pinMode(ENCODER3, INPUT_PULLDOWN); 
-  attachInterrupt(digitalPinToInterrupt(ENCODER1), isr2, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENCODER2), isr2, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENCODER3), isr2, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER1), encoderTick, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER2), encoderTick, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER3), encoderTick, RISING);
 
   ////////////////////////READ OLD VALUE FROM EPROM//////////////////////////////
   preferences.begin("LISA", true); //start preferences in readonly mode
@@ -286,9 +248,7 @@ void setup()
   My_timer = timerBegin(0, 8000, true);
   timerAttachInterrupt(My_timer, &onTimer, true);
   timerAlarmWrite(My_timer, 3000000, true); //setting a timer to save encoder data to EPROM every 5 minutes
-  timerAlarmEnable(My_timer); //Just Enable
-
-
+  timerAlarmEnable(My_timer); //Just Enable the timer
 }
 
 void loop()
@@ -299,7 +259,7 @@ void loop()
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
   if  (bttReset.pressed) {
     displayMessage(bttReset.message);
-    resetPosition();
+    resetPosition(encoder, bttReset, limitSwitch);
     displayMessage ("END of RUN");
 	}
 //turn on relays according to the button status
@@ -337,18 +297,16 @@ void loop()
    }
   //server.handleClient(); for future remote control features
   ////////////////DATA SAVE//////////////////////////////
-  if(dataSaveNecessary){
-    saveData();
-    dataSaveNecessary=false;
-    displayMessage("POS SAVE");
-  }
-//////////////////////SERIAL COMM TEST/////////////////////////////
-  while (Serial1.available() > 0) {
-    char inByte = Serial1.read();
-    Serial.write(inByte);
-    Serial1.write(inByte);
-    displayMessage(String(inByte));
-  }
-  
-  
+    if(dataSaveNecessary){
+      saveData(encoder.currentPosition, "position", preferences); //save the position to the EEPROM every 5 minutes
+      dataSaveNecessary=false;
+      displayMessage("POS SAVE");
+    }
+  //////////////////////SERIAL COMM TEST/////////////////////////////
+    while (Serial1.available() > 0) {
+      char inByte = Serial1.read();
+      Serial.write(inByte);
+      Serial1.write(inByte);
+      displayMessage(String(inByte));
+    }
 }
