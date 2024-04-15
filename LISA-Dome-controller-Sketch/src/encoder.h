@@ -10,6 +10,7 @@ enum Direction {
 
 struct Encoder {
 	float currentPosition;
+  int currentDegrees;
   bool hasChanged;
   int fullRotation; ///number of encoder rotation corresponding to a full rotation of the dome
   int oldSector;
@@ -22,10 +23,15 @@ struct Encoder {
 
 /// @brief Handles encoder Data
 void checkEncoder(Encoder& encoder1);
+/// @brief Updates the position of the dome according to the rotation of the encoder
+/// @param encoder1 the encoder object
+/// @param buttonReset the button object
+/// @param limitSwitch the button object
+void updatePosition(Encoder& encoder1, Button& buttonReset, Button& limitSwitch);
 
-/// @brief Counts how many Ticks happen to make a full rotation of the dome
+/// @brief Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM
 /// @return number of ticks counted
-uint8_t countTicksFullRotation (Encoder& encoder1, Button& buttonReset, Button& limitSwitch);
+uint8_t countTicksFullRotation (Encoder& encoder1, Button& buttonReset, Button& limitSwitch, Preferences& preferences);
 
 /// @brief call this function to disable all controls and wait for the dome to return to the original position
 void resetPosition(Encoder& encoder1, Button& buttonReset, Button& limitSwitch);
@@ -36,6 +42,7 @@ void resetPosition(Encoder& encoder1, Button& buttonReset, Button& limitSwitch);
 /// @param preferences The preferences object.
 void saveData (float data, const char *address, Preferences& preferences);
 
+int convertTicksToDegrees(int ticks, Encoder& encoder1);
 
 
 

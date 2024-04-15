@@ -15,8 +15,8 @@
 Preferences preferences;
 WebServer server(80);
 
-
-Encoder encoder = {0,false,0,0,UNKNOWN};
+Telescope LISA;
+Encoder encoder = {0,0,false,0,0,0,UNKNOWN};
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //initialization of Oled Screen
 
@@ -35,7 +35,7 @@ Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 bool needUpdate = false;
 /// @brief Interrupt Routine handler, sets .pressed attribute according to the reading
 /// @return 
-void IRAM_ATTR isr() {
+void IRAM_ATTR bttClick() {
  bttReset.pressed = digitalRead(BTT_RST);
  bttClockwise.pressed = digitalRead(BTT_CW);
  bttCounterClockwise.pressed = digitalRead(BTT_CCW);
@@ -153,10 +153,10 @@ void setup()
   pinMode (S1_PIN, OUTPUT);
   pinMode (S2_PIN,OUTPUT);
   
-  attachInterrupt (limitSwitch.PIN, isr, CHANGE);
-  attachInterrupt (bttReset.PIN, isr, CHANGE);
-  attachInterrupt (bttClockwise.PIN, isr, CHANGE);
-  attachInterrupt (bttCounterClockwise.PIN, isr, CHANGE);
+  attachInterrupt (limitSwitch.PIN, bttClick, CHANGE);
+  attachInterrupt (bttReset.PIN, bttClick, CHANGE);
+  attachInterrupt (bttClockwise.PIN, bttClick, CHANGE);
+  attachInterrupt (bttCounterClockwise.PIN, bttClick, CHANGE);
   ///////////////////SCREEN INITIALIZATION/////////////////////////////////
   Wire.begin(SDA_PIN, SCL_PIN); 
 
@@ -226,7 +226,7 @@ void setup()
   display.print(WiFi.localIP());
   display.display(); 
 
-  /////////////////////////ENCODER INITIALIZATION////////////////////////////////
+  /////////////////////////ENCODER PINS INITIALIZATION////////////////////////////////
   pinMode(ENCODER1, INPUT_PULLDOWN);
   pinMode(ENCODER2, INPUT_PULLDOWN);
   pinMode(ENCODER3, INPUT_PULLDOWN); 
@@ -234,12 +234,15 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(ENCODER2), encoderTick, RISING);
   attachInterrupt(digitalPinToInterrupt(ENCODER3), encoderTick, RISING);
 
-  ////////////////////////READ OLD VALUE FROM EPROM//////////////////////////////
+  ////////////////////////ENCODER STATUS SETUP//////////////////////////////
   preferences.begin("LISA", true); //start preferences in readonly mode
-  encoder.currentPosition = preferences.getFloat("position", 0);
+  encoder.currentPosition = preferences.getFloat("position", 0); //read values from EPROM and set them to the encoder variables
   encoder.fullRotation= preferences.getInt("fullRotation",0);
   Serial.print("Current position: ");
   Serial.println(encoder.currentPosition);
+  encoder.currentDegrees = convertTicksToDegrees(encoder.currentPosition, encoder);
+  Serial.print("     In degrees: ");
+  Serial.println(encoder.currentDegrees);
   Serial.print("Number of encoder clicks for a full rotation: ");
   Serial.println(encoder.fullRotation);
   preferences.end();
@@ -253,60 +256,75 @@ void setup()
 
 void loop()
 {
-  if(limitSwitch.pressed){
-    encoder.currentPosition=0;
+  if (limitSwitch.pressed)
+  {
+    encoder.currentPosition = 0;
   }
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
-  if  (bttReset.pressed) {
+  if (bttReset.pressed)
+  {
     displayMessage(bttReset.message);
     resetPosition(encoder, bttReset, limitSwitch);
-    displayMessage ("END of RUN");
-	}
-//turn on relays according to the button status
+    displayMessage("END of RUN");
+  }
+  //turn on relays according to the button status
   digitalWrite(S1_PIN, bttClockwise.pressed);
   digitalWrite(LED_BUILTIN, bttClockwise.pressed);
 
-  if(bttClockwise.pressed & needUpdate){
+  if (bttClockwise.pressed & needUpdate)
+  {
     displayMessage(bttClockwise.message);
-   needUpdate = false;
+    needUpdate = false;
   }
   digitalWrite(S2_PIN, bttCounterClockwise.pressed);
   digitalWrite(LED_BUILTIN, bttCounterClockwise.pressed);
-  if(bttCounterClockwise.pressed & needUpdate){
+  if (bttCounterClockwise.pressed & needUpdate)
+  {
     displayMessage(bttCounterClockwise.message);
     needUpdate = false;
   }
-  
-  /////////////////////////////////////////////////////////////
-   if(encoder.hasChanged){
+
+  ///////////////////////UPDATE POSITION//////////////////////////////
+  if (encoder.hasChanged)
+  {
+    //when movement is detected, we first check the direction, and then update the position
     checkEncoder(encoder);
-    if(encoder.newSector!=encoder.oldSector){
-      displayMessage((String)encoder.oldSector);
-      displayMessage("         ");
-      FirstRow=(String)encoder.currentPosition;
-      Serial.println(encoder.newSector);
-      /////////////UPDATE POSITION////////////////
-      if (encoder.direction==CW){
-        encoder.currentPosition++;
-      }
-      else if (encoder.direction==CCW){
-        encoder.currentPosition--;
-      }
-      Serial.println(encoder.currentPosition);
-    }
-   }
+    Serial.println("checkEncoder called");
+    encoder.hasChanged = false;
+    updatePosition(encoder, bttReset, limitSwitch);
+  }
+
   //server.handleClient(); for future remote control features
-  ////////////////DATA SAVE//////////////////////////////
-    if(dataSaveNecessary){
-      saveData(encoder.currentPosition, "position", preferences); //save the position to the EEPROM every 5 minutes
-      dataSaveNecessary=false;
-      displayMessage("POS SAVE");
-    }
+
+  //////////////////DATA SAVE//////////////////////////////
+  if (dataSaveNecessary)
+  {
+    saveData(encoder.currentPosition, "position", preferences); //save the position to the EEPROM every 5 minutes
+    dataSaveNecessary = false;
+    displayMessage("POS SAVE");
+  }
   //////////////////////SERIAL COMM TEST/////////////////////////////
-    while (Serial1.available() > 0) {
-      char inByte = Serial1.read();
-      Serial.write(inByte);
-      Serial1.write(inByte);
-      displayMessage(String(inByte));
+  // while (Serial1.available() > 0) {
+  //   char inByte = Serial1.read();
+  //   Serial.write(inByte);
+  //   Serial1.write(inByte);
+  //   displayMessage(String(inByte));
+  // }
+  ////////////////////////////Serial terminal interface to test functions////////////////////////
+  if (Serial.available() > 0)
+  {
+    char inByte = Serial.read();
+    if (inByte == 'p')
+    {
+      LISA.checkTelescopePosition();
     }
+    if(inByte == 'r')
+    {
+      resetPosition(encoder, bttReset, limitSwitch);
+    }
+    if (inByte == 'c')
+    {
+      countTicksFullRotation(encoder, bttReset, limitSwitch, preferences);
+    }
+  }
 }
