@@ -9,7 +9,7 @@ enum Direction {
 };
 
 struct Encoder {
-	float currentPosition;
+	int currentPosition;
   int currentDegrees;
   bool hasChanged;
   int fullRotation; ///number of encoder rotation corresponding to a full rotation of the dome
@@ -40,7 +40,7 @@ void resetPosition(Encoder& encoder1, Button& buttonReset, Button& limitSwitch);
 /// @param data The data to be saved.
 /// @param address The address in the EEPROM where the data will be saved.
 /// @param preferences The preferences object.
-void saveData (float data, const char *address, Preferences& preferences);
+void saveData (int data, const char *address, Preferences& preferences);
 
 int convertTicksToDegrees(int ticks, Encoder& encoder1);
 

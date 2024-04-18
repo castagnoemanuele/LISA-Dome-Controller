@@ -143,6 +143,7 @@ void setup()
 {
   ////////////////////////SERIAL COMMUNICATION INIT/////////////////////
   Serial.begin(9600); 
+  delay(3000);
   Serial1.begin(9600,SERIAL_8N1,TX_PIN,RX_PIN); ///serial port to communicate with telescope
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
@@ -236,8 +237,13 @@ void setup()
 
   ////////////////////////ENCODER STATUS SETUP//////////////////////////////
   preferences.begin("LISA", true); //start preferences in readonly mode
-  encoder.currentPosition = preferences.getFloat("position", 0); //read values from EPROM and set them to the encoder variables
+  encoder.currentPosition = preferences.getInt("currentPosition", 0); //read values from EPROM and set them to the encoder variables
   encoder.fullRotation= preferences.getInt("fullRotation",0);
+  //check if we have any data on the fullRotation
+  if(encoder.fullRotation==0){
+    Serial.println("No full rotation data found, counting now");
+    countTicksFullRotation(encoder,bttReset,limitSwitch,preferences);
+  }
   Serial.print("Current position: ");
   Serial.println(encoder.currentPosition);
   encoder.currentDegrees = convertTicksToDegrees(encoder.currentPosition, encoder);
@@ -299,7 +305,7 @@ void loop()
   //////////////////DATA SAVE//////////////////////////////
   if (dataSaveNecessary)
   {
-    saveData(encoder.currentPosition, "position", preferences); //save the position to the EEPROM every 5 minutes
+    saveData(encoder.currentPosition, "currentPosition", preferences); //save the position to the EEPROM every 5 minutes
     dataSaveNecessary = false;
     displayMessage("POS SAVE");
   }
@@ -326,5 +332,10 @@ void loop()
     {
       countTicksFullRotation(encoder, bttReset, limitSwitch, preferences);
     }
+    if (inByte == 's')
+    {
+      saveData(encoder.currentPosition, "currentPosition", preferences);
+    }
+   
   }
 }

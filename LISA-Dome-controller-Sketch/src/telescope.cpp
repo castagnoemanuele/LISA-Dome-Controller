@@ -31,11 +31,10 @@ void Telescope::checkTelescopePosition() {
       Serial.println("waiting for telescope position");
       delay(1000);
     } while (Serial1.available() <= 8);
-    // TODO: Add a check for not correctly formatted answers
-
+    
     Serial1.readBytesUntil('#', byte, 8);
     // Check if the received position is correctly formatted
-    if (strlen(byte) == 7 && byte[2] == ':' && byte[5] == ':') {
+    if (byte[2] == ':' && byte[5] == ':') {
       Serial.println("Telescope position received: ");
       Serial.println(byte);
 
@@ -47,6 +46,7 @@ void Telescope::checkTelescopePosition() {
     }
     else {
       Serial.println("Telescope position not correctly formatted");
+      Serial.println(byte);
     }
   }
 }

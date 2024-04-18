@@ -86,7 +86,15 @@ void updatePosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch)
  */
 void resetPosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
   resetButton.pressed=false;
-   while(!limitSwitch.pressed){
+  
+  if (encoder1.currentPosition==0){
+    Serial.println("Dome is already in position 0.");
+    return;
+  }
+  
+  Serial.println("Resetting position to 0.");
+  
+  while(!limitSwitch.pressed){
     //check if we need a clockwise or counterclockwise rotation to get to the limit switch faster
     if(encoder1.currentPosition<0){ 
       digitalWrite(S1_PIN,HIGH);
@@ -94,11 +102,12 @@ void resetPosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
       digitalWrite(S2_PIN,HIGH);
     }
     delay(100);
-   }
-   digitalWrite(S1_PIN,LOW);
-   digitalWrite(S2_PIN,LOW);
-   
-   encoder1.currentPosition = 0;
+  }
+  
+  digitalWrite(S1_PIN,LOW);
+  digitalWrite(S2_PIN,LOW);
+  Serial.println("Dome has returned to position 0.");
+  encoder1.currentPosition = 0;
 }
 
 /// @brief Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM
@@ -108,6 +117,7 @@ uint8_t countTicksFullRotation (Encoder& encoder1, Button& resetButton, Button& 
   //bring the dome to the starting position
   resetPosition(encoder1, resetButton, limitSwitch);
   uint8_t ticks=0;
+  Serial.println("Starting rotation to count fullRot.");
   digitalWrite(S1_PIN,HIGH);//initiate rotation
   delay(500); //wait for the dome to start rotating
   while (limitSwitch.pressed==false){
@@ -128,17 +138,35 @@ uint8_t countTicksFullRotation (Encoder& encoder1, Button& resetButton, Button& 
 
 int convertTicksToDegrees(int ticks, Encoder& encoder1){
   int degrees;
+  //TODO: check if /0 causes problem
   if(ticks<0){
-    return -(ticks*360)/encoder1.fullRotation + 360;
+    return -(ticks*360)/(encoder1.fullRotation +1)+ 360;
   }
-  return (ticks*360)/encoder1.fullRotation;
+  return (ticks*360)/(encoder1.fullRotation+1);
 }
 
-/// @brief updates the value of the dome's position every 5 minutes, called by a timer
-void saveData (float data, const char *address, Preferences& preferences){
+/// @brief to save data in a certain EPROM addres, called by a timer interrupt or a function
+/**
+ * Saves data to the EEPROM in a specified location.
+ *
+ * @param data The data to be saved.
+ * @param address The address in the EEPROM where the data will be saved.
+ * @param preferences The preferences object.
+ */
+void saveData (int data, const char *address, Preferences& preferences){
   preferences.begin("LISA", false); 
-  preferences.putFloat(address, data);
-  Serial.print("New position saved to EPROM:");
-  Serial.println(data);
+  //may correct in future, but for now only two addresses are working
+  const char *addressChar = "fullRotation";
+  if (address == addressChar){
+    preferences.putInt("fullRotation", data);
+    Serial.println("Full rotation data saved.");
+  }
+  const char *addressChar2 = "currentPosition";
+  if (address == addressChar2){
+    preferences.putInt("currentPosition", data);
+    Serial.println("Current position data saved.");
+  }
+ 
+  
   preferences.end();
 }
