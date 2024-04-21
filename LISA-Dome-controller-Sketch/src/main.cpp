@@ -264,7 +264,13 @@ void loop()
 {
   if (limitSwitch.pressed)
   {
+    if(encoder.currentPosition!=0){
+      Serial.println("End of run reached");
+    }
+    
     encoder.currentPosition = 0;
+    encoder.currentDegrees = 0;
+   
   }
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
   if (bttReset.pressed)
@@ -295,7 +301,6 @@ void loop()
   {
     //when movement is detected, we first check the direction, and then update the position
     checkEncoder(encoder);
-    Serial.println("checkEncoder called");
     encoder.hasChanged = false;
     updatePosition(encoder, bttReset, limitSwitch);
   }
@@ -336,6 +341,17 @@ void loop()
     {
       saveData(encoder.currentPosition, "currentPosition", preferences);
     }
-   
+    if (inByte == 't')
+    {
+      Serial.println("Encoder current position: ");
+      Serial.println(encoder.currentPosition);
+      Serial.println("Encoder Current degrees: ");
+      Serial.println(encoder.currentDegrees);
+      Serial.println("Encoder full rotation ticks: ");
+      Serial.println(encoder.fullRotation);
+
+      Serial.println("Telescope position: ");
+      Serial.println(LISA.getTelescopePosition());
+    }
   }
 }

@@ -16,7 +16,9 @@
  */
 void checkEncoder(Encoder& encoder1){
   if(encoder1.oldSector!=encoder1.newSector){
+  //save the old sector
   encoder1.oldSector=encoder1.newSector;}
+  //find the new sector
   if(digitalRead(ENCODER1)==HIGH){
     encoder1.newSector=1;
   }
@@ -26,9 +28,11 @@ void checkEncoder(Encoder& encoder1){
   if(digitalRead(ENCODER3)==HIGH){
     encoder1.newSector=3;
   }
+
   encoder1.hasChanged=false;
 
   /////////DETECT DIRECTION////////
+  //we do this by comparing the old sector with the new sector
   switch (encoder1.newSector){
     case 1:
     if (encoder1.oldSector==2){
@@ -63,6 +67,8 @@ void checkEncoder(Encoder& encoder1){
 /// @param limitSwitch the button object
 void updatePosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
   if(encoder1.newSector!=encoder1.oldSector){
+      Serial.print(encoder1.oldSector);
+      Serial.print("->");
       Serial.println(encoder1.newSector);
       /////////////UPDATE POSITION////////////////
       if (encoder1.direction==CW){
@@ -71,7 +77,15 @@ void updatePosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch)
       else if (encoder1.direction==CCW){
         encoder1.currentPosition--;
       }
-      Serial.println(encoder1.currentPosition);
+      Serial.print("Current encoder position in ticks: ");
+      Serial.print(encoder1.currentPosition);
+      
+      //Convert data to degrees 
+      encoder1.currentDegrees = convertTicksToDegrees(encoder1.currentPosition, encoder1);
+
+      Serial.print("  In degrees: ");
+      Serial.println(encoder1.currentDegrees);
+      Serial.println("");
     }
 }
   
@@ -108,6 +122,8 @@ void resetPosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
   digitalWrite(S2_PIN,LOW);
   Serial.println("Dome has returned to position 0.");
   encoder1.currentPosition = 0;
+  encoder1.currentDegrees = convertTicksToDegrees(encoder1.currentPosition, encoder1);
+
 }
 
 /// @brief Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM
@@ -138,11 +154,14 @@ uint8_t countTicksFullRotation (Encoder& encoder1, Button& resetButton, Button& 
 
 int convertTicksToDegrees(int ticks, Encoder& encoder1){
   int degrees;
-  //TODO: check if /0 causes problem
-  if(ticks<0){
-    return -(ticks*360)/(encoder1.fullRotation +1)+ 360;
+  if (encoder1.fullRotation==0){
+    Serial.println("Full rotation data not found.");
+    return 0;
   }
-  return (ticks*360)/(encoder1.fullRotation+1);
+  if(ticks<0){
+    return ((ticks*360)/(encoder1.fullRotation )) + 360;
+  }
+  return (ticks*360)/(encoder1.fullRotation);
 }
 
 /// @brief to save data in a certain EPROM addres, called by a timer interrupt or a function
