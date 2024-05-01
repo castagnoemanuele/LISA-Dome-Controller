@@ -151,7 +151,10 @@ uint8_t countTicksFullRotation (Encoder& encoder1, Button& resetButton, Button& 
   
   return ticks;
 }
-
+/// @brief Convert a number of ticks with a porportion to the equivalent in degrees keepin
+/// @param ticks number of ticks to be converted
+/// @param encoder1 the encoder object, used to get the full rotation data
+/// @return the number of tick converted to degrees, considering the full rotation data
 int convertTicksToDegrees(int ticks, Encoder& encoder1){
   int degrees;
   if (encoder1.fullRotation==0){

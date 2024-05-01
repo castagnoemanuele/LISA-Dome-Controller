@@ -10,6 +10,7 @@
 #include <telescope.h>
 #include <button.h>
 #include <Preferences.h>
+#include <displayOled.h>
 
 
 Preferences preferences;
@@ -18,12 +19,9 @@ WebServer server(80);
 Telescope LISA;
 Encoder encoder = {0,0,false,0,0,0,UNKNOWN};
 
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //initialization of Oled Screen
-
-String currentData; //Used to hold the l needUpdate data from server
-String FirstRow;  //used to hold the string that appears in the first display row
-
-
+DisplayOled displayOled;
 
 
 Button bttReset = {BTT_RST, 0, false,"RESET"};
@@ -63,41 +61,6 @@ void IRAM_ATTR onTimer(){
 
 
 
-/// @brief Simple Function that manages the display with two separate columns of 6 rows plus the yellow first row at the top
-/// @param message string to be displayed in the log columns
-void displayMessage (String message){
-  static int displayCounter = -1; //Used to reset display when full
-  static int rowCounter = 17; //Used to print to the second column correctly
-  
-  if (displayCounter < 11){
-    
-    if(displayCounter >= 5){ //when we exceed the space on the first column move to the second
-      display.setCursor(64, rowCounter);
-      display.println(message);
-      display.display();
-      displayCounter++;
-      rowCounter += 8;
-    }
-    else{
-      display.println(message);
-      display.display();
-      displayCounter++;
-    }
-    
-  }
-  else {
-    //when display is full reset it but printing again the address
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println(WiFi.localIP());
-    display.setCursor(0, 8);
-    display.println(FirstRow);
-    display.println(message);
-    display.display(); 
-    displayCounter=0;
-    rowCounter = 17;
-  }
-}
 void handleRoot() {
   server.send(200, "text/plain", "Ready");
 }
@@ -107,18 +70,18 @@ void handleGet() {
 
       if (data.toInt()!=0)
       {
-        displayMessage (data);
+        displayOled.displayMessage(data, display);
         int degrees = data.toInt();
       }
       Serial.println("Data: " + data);
     
 
     //if the data has changed in comparison to the one before and it is a string
-    if (currentData!=data){
-      currentData = data;
+    if (displayOled.currentData!=data){
+      displayOled.currentData = data;
       if (data.toInt()==0)
       {
-        displayMessage(data);
+        displayOled.displayMessage(data,display);
       }
     } 
     server.send(200, "text/plain", "Data Received");
@@ -143,7 +106,6 @@ void setup()
 {
   ////////////////////////SERIAL COMMUNICATION INIT/////////////////////
   Serial.begin(9600); 
-  delay(3000);
   Serial1.begin(9600,SERIAL_8N1,TX_PIN,RX_PIN); ///serial port to communicate with telescope
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
@@ -158,7 +120,8 @@ void setup()
   attachInterrupt (bttReset.PIN, bttClick, CHANGE);
   attachInterrupt (bttClockwise.PIN, bttClick, CHANGE);
   attachInterrupt (bttCounterClockwise.PIN, bttClick, CHANGE);
-  ///////////////////SCREEN INITIALIZATION/////////////////////////////////
+  
+  ////////////////////////OLED INITIALIZATION////////////////////////////
   Wire.begin(SDA_PIN, SCL_PIN); 
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
@@ -178,7 +141,6 @@ void setup()
     // display.println("Connecting to:");
     // display.println(ssid);
     display.display();
-
     ////////////////////////////WIFI INITIALIZATION//////////////////////////
     // start by connecting to a WiFi network
     //WiFiManager wifiManager; //REMOVED AFTER INITIAL SETUP
@@ -206,7 +168,7 @@ void setup()
       delay(100);
     }
     
-    FirstRow = "Connected! ";
+    displayOled.FirstRow = "Connected! ";
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
@@ -216,15 +178,15 @@ void setup()
     server.on("/post", HTTP_POST, handlePost, handleUpload);
     server.begin();
   }
-  else{FirstRow="no Wifi";}
+  else{displayOled.FirstRow="no Wifi";}
   
   ///Print address for the first time
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 8);
-  display.println(FirstRow);
-  display.print(WiFi.localIP());
+  display.print(displayOled.FirstRow);
+  display.println(WiFi.localIP());
   display.display(); 
 
   /////////////////////////ENCODER PINS INITIALIZATION////////////////////////////////
@@ -275,9 +237,9 @@ void loop()
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
   if (bttReset.pressed)
   {
-    displayMessage(bttReset.message);
+    displayOled.displayMessage("bttReset.message",display);
     resetPosition(encoder, bttReset, limitSwitch);
-    displayMessage("END of RUN");
+    displayOled.displayMessage("END of RUN",display);
   }
   //turn on relays according to the button status
   digitalWrite(S1_PIN, bttClockwise.pressed);
@@ -285,14 +247,14 @@ void loop()
 
   if (bttClockwise.pressed & needUpdate)
   {
-    displayMessage(bttClockwise.message);
+    displayOled.displayMessage(bttClockwise.message,display);
     needUpdate = false;
   }
   digitalWrite(S2_PIN, bttCounterClockwise.pressed);
   digitalWrite(LED_BUILTIN, bttCounterClockwise.pressed);
   if (bttCounterClockwise.pressed & needUpdate)
   {
-    displayMessage(bttCounterClockwise.message);
+    displayOled.displayMessage(bttCounterClockwise.message,display);
     needUpdate = false;
   }
 
@@ -312,7 +274,7 @@ void loop()
   {
     saveData(encoder.currentPosition, "currentPosition", preferences); //save the position to the EEPROM every 5 minutes
     dataSaveNecessary = false;
-    displayMessage("POS SAVE");
+    displayOled.displayMessage("POS SAVE",display);
   }
   //////////////////////SERIAL COMM TEST/////////////////////////////
   // while (Serial1.available() > 0) {
@@ -353,5 +315,7 @@ void loop()
       Serial.println("Telescope position: ");
       Serial.println(LISA.getTelescopePosition());
     }
+  
+    
   }
 }
