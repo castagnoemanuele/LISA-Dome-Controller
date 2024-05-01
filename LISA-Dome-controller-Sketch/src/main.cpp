@@ -121,26 +121,7 @@ void setup()
   attachInterrupt (bttClockwise.PIN, bttClick, CHANGE);
   attachInterrupt (bttCounterClockwise.PIN, bttClick, CHANGE);
   
-  ////////////////////////OLED INITIALIZATION////////////////////////////
-  Wire.begin(SDA_PIN, SCL_PIN); 
-
-  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) 
-  {
-    Serial.println(F("SSD1306 allocation failed")); 
-  } 
-
-  // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
-    display.display();
-    delay(100);
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.setCursor(0, 0);
-    // display.println("Connecting to:");
-    // display.println(ssid);
-    display.display();
+  displayOled.initDisplay(display);
     ////////////////////////////WIFI INITIALIZATION//////////////////////////
     // start by connecting to a WiFi network
     //WiFiManager wifiManager; //REMOVED AFTER INITIAL SETUP

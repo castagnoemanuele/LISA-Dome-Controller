@@ -11,7 +11,7 @@ public:
     int displayCounter; // Used to reset display when full
     int rowCounter; // Used to print to the second column correctly
     DisplayOled();
-    //void initDisplay(Adafruit_SSD1306& display);
+    void initDisplay(Adafruit_SSD1306& display);
 
 private:
     // Add private member variables as needed
