@@ -121,7 +121,9 @@ void setup()
   attachInterrupt (bttClockwise.PIN, bttClick, CHANGE);
   attachInterrupt (bttCounterClockwise.PIN, bttClick, CHANGE);
   
-  displayOled.initDisplay(display);
+  ////////////////////////OLED INITIALIZATION//////////////////////////
+  displayOled.initDisplay(display, encoder, LISA);
+
     ////////////////////////////WIFI INITIALIZATION//////////////////////////
     // start by connecting to a WiFi network
     //WiFiManager wifiManager; //REMOVED AFTER INITIAL SETUP
@@ -149,7 +151,7 @@ void setup()
       delay(100);
     }
     
-    displayOled.FirstRow = "Connected! ";
+    
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
@@ -161,15 +163,6 @@ void setup()
   }
   else{displayOled.FirstRow="no Wifi";}
   
-  ///Print address for the first time
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 8);
-  display.print(displayOled.FirstRow);
-  display.println(WiFi.localIP());
-  display.display(); 
-
   /////////////////////////ENCODER PINS INITIALIZATION////////////////////////////////
   pinMode(ENCODER1, INPUT_PULLDOWN);
   pinMode(ENCODER2, INPUT_PULLDOWN);
@@ -218,9 +211,10 @@ void loop()
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
   if (bttReset.pressed)
   {
-    displayOled.displayMessage("bttReset.message",display);
+    displayOled.displayMessage(bttReset.message,display);
     resetPosition(encoder, bttReset, limitSwitch);
     displayOled.displayMessage("END of RUN",display);
+    displayOled.printPositionStatus(display, encoder, LISA);
   }
   //turn on relays according to the button status
   digitalWrite(S1_PIN, bttClockwise.pressed);
@@ -246,6 +240,7 @@ void loop()
     checkEncoder(encoder);
     encoder.hasChanged = false;
     updatePosition(encoder, bttReset, limitSwitch);
+    displayOled.printPositionStatus(display, encoder, LISA);
   }
 
   //server.handleClient(); for future remote control features
@@ -295,6 +290,19 @@ void loop()
 
       Serial.println("Telescope position: ");
       Serial.println(LISA.getTelescopePosition());
+    }
+    if(inByte == 'x')
+    {
+      displayOled.printPositionStatus(display, encoder, LISA);
+    }
+    if (inByte == 'z')
+    {
+      Serial.println("Updating display position");
+      displayOled.printPositionStatus(display, encoder, LISA);
+    }
+    if(inByte == 'w')
+    {
+      displayOled.displayMessage("test",display);
     }
   
     

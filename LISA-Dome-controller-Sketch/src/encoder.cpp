@@ -86,6 +86,8 @@ void updatePosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch)
       Serial.print("  In degrees: ");
       Serial.println(encoder1.currentDegrees);
       Serial.println("");
+
+      
     }
 }
   

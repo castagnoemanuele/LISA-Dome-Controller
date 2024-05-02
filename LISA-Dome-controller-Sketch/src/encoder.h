@@ -1,6 +1,8 @@
 #include <button.h>
 #include <Preferences.h>
 
+#ifndef ENCODER_H
+#define ENCODER_H
 
 enum Direction {
   UNKNOWN,
@@ -45,5 +47,5 @@ void saveData (int data, const char *address, Preferences& preferences);
 int convertTicksToDegrees(int ticks, Encoder& encoder1);
 
 
-
+#endif // ENCODER_H
 

@@ -20,5 +20,5 @@
 #define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C //Oled Screen Address for initialization
 
-#define splash1_width  82
-#define splash1_height 64
+
+

@@ -1,3 +1,6 @@
+#ifndef TELESCOPE_H
+#define TELESCOPE_H
+
 class Telescope {
     private:
         int telescopePosition;
@@ -8,5 +11,6 @@ class Telescope {
 
 };
 
+#endif // TELESCOPE_H
 
 
