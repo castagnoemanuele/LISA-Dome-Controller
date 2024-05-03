@@ -48,14 +48,18 @@ void IRAM_ATTR encoderTick() {
 
 
 bool dataSaveNecessary=false;
-hw_timer_t *My_timer = NULL;
+bool telescopeCheckNecessary=false;
+hw_timer_t *timerEPROM = NULL;
+hw_timer_t *timerTelescope = NULL;
 
 /// @brief Interrupt Routine handler, Checks the timer to save the position periodically
-/// @return 
-void IRAM_ATTR onTimer(){
+void IRAM_ATTR onTimerEPROM(){
   dataSaveNecessary=true;
 }
-
+/// @brief Interrupt Routine handler, Checks the timer to check the telescope position periodically
+void IRAM_ATTR onTimerTelescope(){
+  telescopeCheckNecessary=true;
+}
 
 
 
@@ -178,6 +182,7 @@ void setup()
   //check if we have any data on the fullRotation
   if(encoder.fullRotation==0){
     Serial.println("No full rotation data found, counting now");
+    displayOled.displayMessage("COUNT TICKS",display);
     countTicksFullRotation(encoder,bttReset,limitSwitch,preferences);
   }
   Serial.print("Current position: ");
@@ -189,11 +194,19 @@ void setup()
   Serial.println(encoder.fullRotation);
   preferences.end();
 
+  displayOled.printPositionStatus(display, encoder, LISA); //refresh position with the new data from the EPROM
+
   ////////////////////////////TIMER FOR SAVING DATA/////////////////////////////
-  My_timer = timerBegin(0, 8000, true);
-  timerAttachInterrupt(My_timer, &onTimer, true);
-  timerAlarmWrite(My_timer, 3000000, true); //setting a timer to save encoder data to EPROM every 5 minutes
-  timerAlarmEnable(My_timer); //Just Enable the timer
+  timerEPROM = timerBegin(0, 8000, true);
+  timerAttachInterrupt(timerEPROM, &onTimerEPROM, true);
+  timerAlarmWrite(timerEPROM, 3000000, true); //setting a timer to save encoder data to EPROM every 5 minutes
+  timerAlarmEnable(timerEPROM); //Just Enable the timer
+
+  //////////////////////////TIMER FOR TELESCOPE CHECK//////////////////////////
+  timerTelescope = timerBegin(1, 8000, true);
+  timerAttachInterrupt(timerTelescope, &onTimerTelescope, true);
+  timerAlarmWrite(timerTelescope, 100000, true); //setting a timer to check the telescope position every 10 seconds
+  timerAlarmEnable(timerTelescope); //Just Enable the timer
 }
 
 void loop()
@@ -252,6 +265,14 @@ void loop()
     dataSaveNecessary = false;
     displayOled.displayMessage("POS SAVE",display);
   }
+  ///////////////////////TELESCOPE CHECK////////////////////////
+  if (telescopeCheckNecessary)
+  {
+    displayOled.displayMessage("TEL CHECK",display);
+    //LISA.checkTelescopePosition();
+    Serial.println("Checking telescope position");
+    telescopeCheckNecessary = false;
+  }
   //////////////////////SERIAL COMM TEST/////////////////////////////
   // while (Serial1.available() > 0) {
   //   char inByte = Serial1.read();
@@ -303,6 +324,7 @@ void loop()
     if(inByte == 'w')
     {
       displayOled.displayMessage("test",display);
+      displayOled.displayMessage("COUNT TICKS",display);
     }
   
     

@@ -38,7 +38,7 @@ void Telescope::checkTelescopePosition() {
     // Listen on the Serial1 for the answer and save it
     char byte[8] = {0};
     do {
-      Serial.println("waiting for telescope position");
+      Serial.println("Waiting for telescope position");
       delay(1000);
     } while (Serial1.available() <= 8);
     

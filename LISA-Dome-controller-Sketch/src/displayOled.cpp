@@ -33,8 +33,10 @@ void DisplayOled::displayMessage(String message, Adafruit_SSD1306& display) {
   if (secondRow && rowCounter == 56) {
     //when the log part is full reset it
     display.fillRect(0,16,128,48,BLACK);
+    //print the message just received in the firs column
     display.setCursor(0, 16);
     display.println(message);
+    //
     rowCounter = 8;
     secondRow = false;
   }
