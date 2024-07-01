@@ -28,19 +28,32 @@ int Telescope::convertRA(char* ra) {
 
 /// @brief first ask, then print telescope position and save it
 void Telescope::checkTelescopePosition() {
-  if (Serial1.availableForWrite()) {
-    // Ask the telescope for the Right Ascension
-    Serial1.println(":GR#");
-    //Clean the buffer
+  //Clean the buffer
     while (Serial1.available() > 0) {
       Serial1.read();
     }
+    
+  if (Serial1.availableForWrite()) {
+    
+    // Ask the telescope for the Right Ascension
+    Serial1.print(":GR#\n");
+    
     // Listen on the Serial1 for the answer and save it
     char byte[8] = {0};
+    int counter =0; //used to exit from the next loop
     do {
       Serial.println("Waiting for telescope position");
+      
       delay(1000);
-    } while (Serial1.available() <= 8);
+      counter++;
+
+      
+      if(counter >= 10){
+        Serial.println("Telescope not responding");
+        break;
+      }
+
+    } while (Serial1.available() <= 8 );
     
     Serial1.readBytes( byte, 8);
     // Check if the received position is correctly formatted
@@ -63,6 +76,8 @@ void Telescope::checkTelescopePosition() {
       Serial.println("Telescope position not correctly formatted");
       Serial.println(byte);
     }
+  } else {
+    Serial.println("Serial1 not available for write");
   }
 }
 

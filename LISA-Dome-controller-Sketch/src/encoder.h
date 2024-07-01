@@ -29,11 +29,11 @@ void checkEncoder(Encoder& encoder1);
 /// @param encoder1 the encoder object
 /// @param buttonReset the button object
 /// @param limitSwitch the button object
-void updatePosition(Encoder& encoder1, Button& buttonReset, Button& limitSwitch);
+void updatePosition(Encoder& encoder1);
 
 /// @brief Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM
 /// @return number of ticks counted
-uint8_t countTicksFullRotation (Encoder& encoder1, Button& buttonReset, Button& limitSwitch, Preferences& preferences);
+long countTicksFullRotation (Encoder& encoder1, Button& buttonReset, Button& limitSwitch, Preferences& preferences);
 
 /// @brief call this function to disable all controls and wait for the dome to return to the original position
 void resetPosition(Encoder& encoder1, Button& buttonReset, Button& limitSwitch);

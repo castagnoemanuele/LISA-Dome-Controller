@@ -19,13 +19,13 @@ void checkEncoder(Encoder& encoder1){
   //save the old sector
   encoder1.oldSector=encoder1.newSector;}
   //find the new sector
-  if(digitalRead(ENCODER1)==HIGH){
+  if(digitalRead(ENCODER1)==LOW){
     encoder1.newSector=1;
   }
-  if(digitalRead(ENCODER2)==HIGH){
+  if(digitalRead(ENCODER2)==LOW){
     encoder1.newSector=2;
   }
-  if(digitalRead(ENCODER3)==HIGH){
+  if(digitalRead(ENCODER3)==LOW){
     encoder1.newSector=3;
   }
 
@@ -65,7 +65,7 @@ void checkEncoder(Encoder& encoder1){
 /// @param encoder1 the encoder object
 /// @param resetButton the button object
 /// @param limitSwitch the button object
-void updatePosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
+void updatePosition(Encoder& encoder1){
   if(encoder1.newSector!=encoder1.oldSector){
       Serial.print(encoder1.oldSector);
       Serial.print("->");
@@ -130,18 +130,22 @@ void resetPosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
 
 /// @brief Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM
 /// @return number of ticks counted 
-uint8_t countTicksFullRotation (Encoder& encoder1, Button& resetButton, Button& limitSwitch, Preferences& preferences)
+long countTicksFullRotation (Encoder& encoder1, Button& resetButton, Button& limitSwitch, Preferences& preferences)
 {
   //bring the dome to the starting position
   resetPosition(encoder1, resetButton, limitSwitch);
-  uint8_t ticks=0;
+  long ticks=0;
   Serial.println("Starting rotation to count fullRot.");
   digitalWrite(S1_PIN,HIGH);//initiate rotation
-  delay(500); //wait for the dome to start rotating
+  delay(1000); //wait for the dome to start rotating
   while (limitSwitch.pressed==false){
     //count how many updates happen to the encoder
     if(encoder1.hasChanged){
-      ticks++;
+      checkEncoder(encoder1);
+      if(encoder1.oldSector != encoder1.newSector){
+        ticks++;
+        Serial.println(ticks);
+      }
       encoder1.hasChanged=false;
     }
   }

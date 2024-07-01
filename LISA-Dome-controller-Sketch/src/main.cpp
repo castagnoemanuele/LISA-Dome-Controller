@@ -30,15 +30,17 @@ Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
 Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 
 
-bool needUpdate = false;
+bool needUpdate = false; //flag to update the display only when the button is pressed
 /// @brief Interrupt Routine handler, sets .pressed attribute according to the reading
 /// @return 
 void IRAM_ATTR bttClick() {
- bttReset.pressed = digitalRead(BTT_RST);
- bttClockwise.pressed = digitalRead(BTT_CW);
- bttCounterClockwise.pressed = digitalRead(BTT_CCW);
- limitSwitch.pressed = digitalRead(BTT_END);
- needUpdate= true;
+ 
+    bttReset.pressed = digitalRead(BTT_RST);
+    bttClockwise.pressed = digitalRead(BTT_CW);
+    bttCounterClockwise.pressed = digitalRead(BTT_CCW);
+    limitSwitch.pressed = !digitalRead(BTT_END); //opposite because it is active when low
+    needUpdate= true;
+  
 }
 
 
@@ -120,11 +122,19 @@ void setup()
   pinMode (S1_PIN, OUTPUT);
   pinMode (S2_PIN,OUTPUT);
   
-  attachInterrupt (limitSwitch.PIN, bttClick, CHANGE);
+  attachInterrupt (limitSwitch.PIN, bttClick, FALLING);
   attachInterrupt (bttReset.PIN, bttClick, CHANGE);
   attachInterrupt (bttClockwise.PIN, bttClick, CHANGE);
   attachInterrupt (bttCounterClockwise.PIN, bttClick, CHANGE);
   
+  /////////////////////////ENCODER PINS INITIALIZATION////////////////////////////////
+  pinMode(ENCODER1, INPUT_PULLUP);
+  pinMode(ENCODER2, INPUT_PULLUP);
+  pinMode(ENCODER3, INPUT_PULLUP); 
+  attachInterrupt(digitalPinToInterrupt(ENCODER1), encoderTick, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER2), encoderTick, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER3), encoderTick, FALLING);
+
   ////////////////////////OLED INITIALIZATION//////////////////////////
   displayOled.initDisplay(display, encoder, LISA);
 
@@ -144,7 +154,7 @@ void setup()
     //     displayMessage("......");
     //   }
     // }
-    
+
   if (WiFi.status() == WL_CONNECTED) 
   {
     //Blink 3 times to signal wifi connection
@@ -167,14 +177,6 @@ void setup()
   }
   else{displayOled.FirstRow="no Wifi";}
   
-  /////////////////////////ENCODER PINS INITIALIZATION////////////////////////////////
-  pinMode(ENCODER1, INPUT_PULLDOWN);
-  pinMode(ENCODER2, INPUT_PULLDOWN);
-  pinMode(ENCODER3, INPUT_PULLDOWN); 
-  attachInterrupt(digitalPinToInterrupt(ENCODER1), encoderTick, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENCODER2), encoderTick, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENCODER3), encoderTick, RISING);
-
   ////////////////////////ENCODER STATUS SETUP//////////////////////////////
   preferences.begin("LISA", true); //start preferences in readonly mode
   encoder.currentPosition = preferences.getInt("currentPosition", 0); //read values from EPROM and set them to the encoder variables
@@ -207,6 +209,7 @@ void setup()
   timerAttachInterrupt(timerTelescope, &onTimerTelescope, true);
   timerAlarmWrite(timerTelescope, 100000, true); //setting a timer to check the telescope position every 10 seconds
   timerAlarmEnable(timerTelescope); //Just Enable the timer
+
 }
 
 void loop()
@@ -216,11 +219,10 @@ void loop()
     if(encoder.currentPosition!=0){
       Serial.println("End of run reached");
     }
-    
     encoder.currentPosition = 0;
     encoder.currentDegrees = 0;
-   
   }
+  ////////////////////////////MANUAL CONTROL///////////////////////////
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
   if (bttReset.pressed)
   {
@@ -245,19 +247,16 @@ void loop()
     displayOled.displayMessage(bttCounterClockwise.message,display);
     needUpdate = false;
   }
-
   ///////////////////////UPDATE POSITION//////////////////////////////
   if (encoder.hasChanged)
   {
     //when movement is detected, we first check the direction, and then update the position
     checkEncoder(encoder);
     encoder.hasChanged = false;
-    updatePosition(encoder, bttReset, limitSwitch);
+    updatePosition(encoder);
     displayOled.printPositionStatus(display, encoder, LISA);
   }
-
   //server.handleClient(); for future remote control features
-
   //////////////////DATA SAVE//////////////////////////////
   if (dataSaveNecessary)
   {
@@ -280,6 +279,10 @@ void loop()
   //   Serial1.write(inByte);
   //   displayMessage(String(inByte));
   // }
+
+
+
+  
   ////////////////////////////Serial terminal interface to test functions////////////////////////
   if (Serial.available() > 0)
   {
@@ -287,6 +290,7 @@ void loop()
     if (inByte == 'p')
     {
       LISA.checkTelescopePosition();
+      displayOled.printPositionStatus(display, encoder, LISA);
     }
     if(inByte == 'r')
     {
@@ -326,7 +330,8 @@ void loop()
       displayOled.displayMessage("test",display);
       displayOled.displayMessage("COUNT TICKS",display);
     }
-  
-    
+    if (inByte== 'g'){
+      saveData(360,"fullRotation",preferences);
+    }
   }
 }
