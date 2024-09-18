@@ -1,0 +1,34 @@
+\doxysection{src/display\+Oled.cpp File Reference}
+\hypertarget{display_oled_8cpp}{}\label{display_oled_8cpp}\index{src/displayOled.cpp@{src/displayOled.cpp}}
+
+
+Implementation of the \doxylink{class_display_oled}{Display\+Oled} class for managing the OLED display.  
+
+
+{\ttfamily \#include "{}display\+Oled.\+h"{}}\newline
+{\ttfamily \#include $<$config.\+h$>$}\newline
+{\ttfamily \#include $<$logo.\+h$>$}\newline
+{\ttfamily \#include $<$Encoder.\+h$>$}\newline
+{\ttfamily \#include "{}Telescope.\+h"{}}\newline
+
+
+\doxysubsection{Detailed Description}
+Implementation of the \doxylink{class_display_oled}{Display\+Oled} class for managing the OLED display. 
+
+This file contains the implementation of the \doxylink{class_display_oled}{Display\+Oled} class, which is responsible for managing the OLED display used in the LISA Dome Controller project. The class provides methods for initializing the display, displaying messages, and updating the display with the current Wi\+Fi status and telescope position.
+
+The \doxylink{class_display_oled}{Display\+Oled} class provides the following functionalities\+:
+\begin{DoxyItemize}
+\item Initialization of the OLED display.
+\item Displaying messages in a two-\/column format.
+\item Updating the display with the current Wi\+Fi status.
+\item Updating the display with the current position of the telescope and the target position.
+\end{DoxyItemize}
+
+The display is divided into two columns, each with 6 rows, plus a yellow first row at the top. When the first column is full, the messages are displayed in the second column. When both columns are full, the display is cleared and the messages start from the first column again.
+
+The init\+Display method initializes the display and shows a custom logo, followed by the Wi\+Fi status and the telescope position. The print\+Wifi\+Status method updates the first row of the display with the current Wi\+Fi status, and the print\+Position\+Status method updates the second row with the current position of the telescope and the target position.
+
+\begin{DoxyNote}{Note}
+This file is part of the LISA Dome Controller project. 
+\end{DoxyNote}

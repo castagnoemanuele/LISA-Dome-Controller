@@ -1,0 +1,175 @@
+\doxysection{src/encoder.h File Reference}
+\hypertarget{encoder_8h}{}\label{encoder_8h}\index{src/encoder.h@{src/encoder.h}}
+
+
+This file contains the implementation of the \doxylink{struct_encoder}{Encoder} class methods, including functions to check the encoder position, update the dome position, count the number of ticks for a full rotation, and save data to the EEPROM.  
+
+
+{\ttfamily \#include $<$button.\+h$>$}\newline
+{\ttfamily \#include $<$Preferences.\+h$>$}\newline
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{struct_encoder}{Encoder}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{encoder_8h_a224b9163917ac32fc95a60d8c1eec3aa}\label{encoder_8h_a224b9163917ac32fc95a60d8c1eec3aa} 
+enum {\bfseries Direction} \{ {\bfseries UNKNOWN}
+, {\bfseries CW}
+, {\bfseries CCW}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{encoder_8h_a139de19c980f779e48e01d1f8fba4263}{check\+Encoder}} (\mbox{\hyperlink{struct_encoder}{Encoder}} \&encoder1)
+\begin{DoxyCompactList}\small\item\em Handles encoder Data. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{encoder_8h_aea3da456e252aa2089661fd06157ec2f}{update\+Position}} (\mbox{\hyperlink{struct_encoder}{Encoder}} \&encoder1)
+\begin{DoxyCompactList}\small\item\em Updates the position of the dome according to the rotation of the encoder. \end{DoxyCompactList}\item 
+long \mbox{\hyperlink{encoder_8h_a38add31e961db4ece7f2d98d6c33156c}{count\+Ticks\+Full\+Rotation}} (\mbox{\hyperlink{struct_encoder}{Encoder}} \&encoder1, \mbox{\hyperlink{struct_button}{Button}} \&button\+Reset, \mbox{\hyperlink{struct_button}{Button}} \&limit\+Switch, Preferences \&preferences)
+\begin{DoxyCompactList}\small\item\em Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{encoder_8h_ac168af46c2980b991b3e14269c483d66}{reset\+Position}} (\mbox{\hyperlink{struct_encoder}{Encoder}} \&encoder1, \mbox{\hyperlink{struct_button}{Button}} \&button\+Reset, \mbox{\hyperlink{struct_button}{Button}} \&limit\+Switch)
+\begin{DoxyCompactList}\small\item\em call this function to disable all controls and wait for the dome to return to the original position \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{encoder_8h_a69b92e165de7d3ce033d5730f7b771ea}{save\+Data}} (int data, const char \texorpdfstring{$\ast$}{*}address, Preferences \&preferences)
+\begin{DoxyCompactList}\small\item\em saves data to the EEPROM to a specified location \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{encoder_8h_a112a738a79a560eacdc5b40f58245cc2}{convert\+Ticks\+To\+Degrees}} (int ticks, \mbox{\hyperlink{struct_encoder}{Encoder}} \&encoder1)
+\begin{DoxyCompactList}\small\item\em Convert a number of ticks with a porportion to the equivalent in degrees keepin. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This file contains the implementation of the \doxylink{struct_encoder}{Encoder} class methods, including functions to check the encoder position, update the dome position, count the number of ticks for a full rotation, and save data to the EEPROM. 
+
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{encoder_8h_a139de19c980f779e48e01d1f8fba4263}\index{encoder.h@{encoder.h}!checkEncoder@{checkEncoder}}
+\index{checkEncoder@{checkEncoder}!encoder.h@{encoder.h}}
+\doxysubsubsection{\texorpdfstring{checkEncoder()}{checkEncoder()}}
+{\footnotesize\ttfamily \label{encoder_8h_a139de19c980f779e48e01d1f8fba4263} 
+void check\+Encoder (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_encoder}{Encoder}} \&}]{encoder1}{}\end{DoxyParamCaption})}
+
+
+
+Handles encoder Data. 
+
+Checks the state of the encoder by comparing which sector is active relative to the sector that was active in the previous iteration. This way it also detects the direction of rotation. 
+\begin{DoxyParams}{Parameters}
+{\em encoder1} & The \doxylink{struct_encoder}{Encoder} object to be checked. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{encoder_8h_a112a738a79a560eacdc5b40f58245cc2}\index{encoder.h@{encoder.h}!convertTicksToDegrees@{convertTicksToDegrees}}
+\index{convertTicksToDegrees@{convertTicksToDegrees}!encoder.h@{encoder.h}}
+\doxysubsubsection{\texorpdfstring{convertTicksToDegrees()}{convertTicksToDegrees()}}
+{\footnotesize\ttfamily \label{encoder_8h_a112a738a79a560eacdc5b40f58245cc2} 
+int convert\+Ticks\+To\+Degrees (\begin{DoxyParamCaption}\item[{int}]{ticks}{, }\item[{\mbox{\hyperlink{struct_encoder}{Encoder}} \&}]{encoder1}{}\end{DoxyParamCaption})}
+
+
+
+Convert a number of ticks with a porportion to the equivalent in degrees keepin. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em ticks} & number of ticks to be converted \\
+\hline
+{\em encoder1} & the encoder object, used to get the full rotation data \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the number of tick converted to degrees, considering the full rotation data 
+\end{DoxyReturn}
+\Hypertarget{encoder_8h_a38add31e961db4ece7f2d98d6c33156c}\index{encoder.h@{encoder.h}!countTicksFullRotation@{countTicksFullRotation}}
+\index{countTicksFullRotation@{countTicksFullRotation}!encoder.h@{encoder.h}}
+\doxysubsubsection{\texorpdfstring{countTicksFullRotation()}{countTicksFullRotation()}}
+{\footnotesize\ttfamily \label{encoder_8h_a38add31e961db4ece7f2d98d6c33156c} 
+long count\+Ticks\+Full\+Rotation (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_encoder}{Encoder}} \&}]{encoder1}{, }\item[{\mbox{\hyperlink{struct_button}{Button}} \&}]{reset\+Button}{, }\item[{\mbox{\hyperlink{struct_button}{Button}} \&}]{limit\+Switch}{, }\item[{Preferences \&}]{preferences}{}\end{DoxyParamCaption})}
+
+
+
+Counts how many Ticks happen to make a full rotation of the dome and saves the data to the EEPROM. 
+
+\begin{DoxyReturn}{Returns}
+number of ticks counted
+
+number of ticks counted ~\newline
+ 
+\end{DoxyReturn}
+\Hypertarget{encoder_8h_ac168af46c2980b991b3e14269c483d66}\index{encoder.h@{encoder.h}!resetPosition@{resetPosition}}
+\index{resetPosition@{resetPosition}!encoder.h@{encoder.h}}
+\doxysubsubsection{\texorpdfstring{resetPosition()}{resetPosition()}}
+{\footnotesize\ttfamily \label{encoder_8h_ac168af46c2980b991b3e14269c483d66} 
+void reset\+Position (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_encoder}{Encoder}} \&}]{encoder1}{, }\item[{\mbox{\hyperlink{struct_button}{Button}} \&}]{reset\+Button}{, }\item[{\mbox{\hyperlink{struct_button}{Button}} \&}]{limit\+Switch}{}\end{DoxyParamCaption})}
+
+
+
+call this function to disable all controls and wait for the dome to return to the original position 
+
+Resets the position of the dome.
+
+
+\begin{DoxyParams}{Parameters}
+{\em encoder1} & The encoder object. \\
+\hline
+{\em reset\+Button} & The button used for resetting the position. \\
+\hline
+{\em limit\+Switch} & The limit switch used for detecting the end position. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{encoder_8h_a69b92e165de7d3ce033d5730f7b771ea}\index{encoder.h@{encoder.h}!saveData@{saveData}}
+\index{saveData@{saveData}!encoder.h@{encoder.h}}
+\doxysubsubsection{\texorpdfstring{saveData()}{saveData()}}
+{\footnotesize\ttfamily \label{encoder_8h_a69b92e165de7d3ce033d5730f7b771ea} 
+void save\+Data (\begin{DoxyParamCaption}\item[{int}]{data}{, }\item[{const char \texorpdfstring{$\ast$}{*}}]{address}{, }\item[{Preferences \&}]{preferences}{}\end{DoxyParamCaption})}
+
+
+
+saves data to the EEPROM to a specified location 
+
+
+\begin{DoxyParams}{Parameters}
+{\em data} & The data to be saved. \\
+\hline
+{\em address} & The address in the EEPROM where the data will be saved. \\
+\hline
+{\em preferences} & The preferences object.\\
+\hline
+\end{DoxyParams}
+saves data to the EEPROM to a specified location
+
+Saves data to the EEPROM in a specified location.
+
+
+\begin{DoxyParams}{Parameters}
+{\em data} & The data to be saved. \\
+\hline
+{\em address} & The address in the EEPROM where the data will be saved. \\
+\hline
+{\em preferences} & The preferences object. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{encoder_8h_aea3da456e252aa2089661fd06157ec2f}\index{encoder.h@{encoder.h}!updatePosition@{updatePosition}}
+\index{updatePosition@{updatePosition}!encoder.h@{encoder.h}}
+\doxysubsubsection{\texorpdfstring{updatePosition()}{updatePosition()}}
+{\footnotesize\ttfamily \label{encoder_8h_aea3da456e252aa2089661fd06157ec2f} 
+void update\+Position (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{struct_encoder}{Encoder}} \&}]{encoder1}{}\end{DoxyParamCaption})}
+
+
+
+Updates the position of the dome according to the rotation of the encoder. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em encoder1} & the encoder object \\
+\hline
+{\em button\+Reset} & the button object \\
+\hline
+{\em limit\+Switch} & the button object\\
+\hline
+{\em encoder1} & the encoder object \\
+\hline
+{\em reset\+Button} & the button object \\
+\hline
+{\em limit\+Switch} & the button object \\
+\hline
+\end{DoxyParams}

@@ -1,12 +1,22 @@
+
+/**
+ * @file telescope.cpp
+ * @brief Implementation of the Telescope class methods for controlling and querying the telescope position.
+ * 
+ * This file contains the implementation of the Telescope class methods, including functions to get the telescope position,
+ * convert Right Ascension (RA) from HH:MM:SS format to degrees, and check the telescope position by querying the hardware.
+ */
+
 #include <HardwareSerial.h>
 #include <telescope.h>
+
 
 
 int Telescope::getTelescopePosition() {
   return telescopePosition;
 }
 
-// Function to convert Right Ascension from HH:MM:SS format to degrees
+/// Function to convert Right Ascension from HH:MM:SS format to degrees
 int Telescope::convertRA(char* ra) {
   int hours, minutes, seconds;
   sscanf(ra, "%d:%d:%d", &hours, &minutes, &seconds);

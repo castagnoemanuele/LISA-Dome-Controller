@@ -1,3 +1,8 @@
+/// @file
+/// @brief This file contains the implementation of the Encoder class methods, including functions to check the encoder position,
+/// update the dome position, count the number of ticks for a full rotation, and save data to the EEPROM.
+
+
 #include <button.h>
 #include <Preferences.h>
 
@@ -11,12 +16,12 @@ enum Direction {
 };
 
 struct Encoder {
-	int currentPosition;
-  int currentDegrees;
-  bool hasChanged;
+	int currentPosition; ///current position in ticks
+  int currentDegrees; ///current position in degrees
+  bool hasChanged; ///flag to check if the encoder has changed
   int fullRotation; ///number of encoder rotation corresponding to a full rotation of the dome
-  int oldSector;
-  int newSector;
+  int oldSector; ///the sector where the dome was before the last movement
+  int newSector; ///the sector where the dome is after the last movement
 
   Direction direction;
   //bool status[3];

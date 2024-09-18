@@ -1,0 +1,48 @@
+\doxysection{encoder.\+h}
+\hypertarget{encoder_8h_source}{}\label{encoder_8h_source}\index{src/encoder.h@{src/encoder.h}}
+\mbox{\hyperlink{encoder_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{button_8h}{button.h}}>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <Preferences.h>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#ifndef\ ENCODER\_H}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ ENCODER\_H}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{enum}\ Direction\ \{}
+\DoxyCodeLine{00013\ \ \ UNKNOWN,}
+\DoxyCodeLine{00014\ \ \ CW,}
+\DoxyCodeLine{00015\ \ \ CCW,}
+\DoxyCodeLine{00016\ \};}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_encoder}{Encoder}}\ \{}
+\DoxyCodeLine{00019\ \ \ \ \ \textcolor{keywordtype}{int}\ currentPosition;\ }
+\DoxyCodeLine{00020\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_encoder_ac84a417488490c90c4c48ea020f81f48}{currentDegrees}};\ }
+\DoxyCodeLine{00021\ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_encoder_a64414d71c5cd55d353360959379b1315}{hasChanged}};\ }
+\DoxyCodeLine{00022\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_encoder_a37efa317b97fdd2ec3596427acb0db86}{fullRotation}};\ }
+\DoxyCodeLine{00023\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_encoder_ad786d8927224ce906bced40984f99bbb}{oldSector}};\ }
+\DoxyCodeLine{00024\ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{struct_encoder_a475b81ff78e33f3bcacd8cb18aff7c6a}{newSector}};\ }
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ Direction\ \mbox{\hyperlink{struct_encoder_a6a0ac5efc67d338570be695a611ce654}{direction}};}
+\DoxyCodeLine{00027\ \ \ \textcolor{comment}{//bool\ status[3];}}
+\DoxyCodeLine{00028\ \};}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00032\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{encoder_8h_a139de19c980f779e48e01d1f8fba4263}{checkEncoder}}(\mbox{\hyperlink{struct_encoder}{Encoder}}\&\ encoder1);}
+\DoxyCodeLine{00037\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{encoder_8h_aea3da456e252aa2089661fd06157ec2f}{updatePosition}}(\mbox{\hyperlink{struct_encoder}{Encoder}}\&\ encoder1);}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00041\ \textcolor{keywordtype}{long}\ \mbox{\hyperlink{encoder_8h_a38add31e961db4ece7f2d98d6c33156c}{countTicksFullRotation}}\ (\mbox{\hyperlink{struct_encoder}{Encoder}}\&\ encoder1,\ \mbox{\hyperlink{struct_button}{Button}}\&\ buttonReset,\ \mbox{\hyperlink{struct_button}{Button}}\&\ limitSwitch,\ Preferences\&\ preferences);}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00044\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{encoder_8h_ac168af46c2980b991b3e14269c483d66}{resetPosition}}(\mbox{\hyperlink{struct_encoder}{Encoder}}\&\ encoder1,\ \mbox{\hyperlink{struct_button}{Button}}\&\ buttonReset,\ \mbox{\hyperlink{struct_button}{Button}}\&\ limitSwitch);}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00050\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{encoder_8h_a69b92e165de7d3ce033d5730f7b771ea}{saveData}}\ (\textcolor{keywordtype}{int}\ data,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *address,\ Preferences\&\ preferences);}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{encoder_8h_a112a738a79a560eacdc5b40f58245cc2}{convertTicksToDegrees}}(\textcolor{keywordtype}{int}\ ticks,\ \mbox{\hyperlink{struct_encoder}{Encoder}}\&\ encoder1);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ ENCODER\_H}}
+\DoxyCodeLine{00056\ }
+
+\end{DoxyCode}

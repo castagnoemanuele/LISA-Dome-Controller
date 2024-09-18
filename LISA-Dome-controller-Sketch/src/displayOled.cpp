@@ -1,3 +1,31 @@
+/**
+ * @file displayOled.cpp
+ * @brief Implementation of the DisplayOled class for managing the OLED display.
+ * 
+ * This file contains the implementation of the DisplayOled class, which is responsible for
+ * managing the OLED display used in the LISA Dome Controller project. The class provides
+ * methods for initializing the display, displaying messages, and updating the display with
+ * the current WiFi status and telescope position.
+ * 
+ * @details
+ * The DisplayOled class provides the following functionalities:
+ * - Initialization of the OLED display.
+ * - Displaying messages in a two-column format.
+ * - Updating the display with the current WiFi status.
+ * - Updating the display with the current position of the telescope and the target position.
+ * 
+ * The display is divided into two columns, each with 6 rows, plus a yellow first row at the top.
+ * When the first column is full, the messages are displayed in the second column. When both
+ * columns are full, the display is cleared and the messages start from the first column again.
+ * 
+ * The initDisplay method initializes the display and shows a custom logo, followed by the
+ * WiFi status and the telescope position. The printWifiStatus method updates the first row
+ * of the display with the current WiFi status, and the printPositionStatus method updates
+ * the second row with the current position of the telescope and the target position.
+ * 
+ * @note This file is part of the LISA Dome Controller project.
+ */
+
 #include "displayOled.h"
 #include <config.h>
 #include <logo.h>

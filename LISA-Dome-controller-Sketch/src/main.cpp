@@ -208,7 +208,7 @@ void setup()
   timerTelescope = timerBegin(1, 8000, true);
   timerAttachInterrupt(timerTelescope, &onTimerTelescope, true);
   timerAlarmWrite(timerTelescope, 100000, true); //setting a timer to check the telescope position every 10 seconds
-  timerAlarmEnable(timerTelescope); //Just Enable the timer
+  //timerAlarmEnable(timerTelescope); //Just Enable the timer
 
 }
 
@@ -300,11 +300,11 @@ void loop()
     {
       countTicksFullRotation(encoder, bttReset, limitSwitch, preferences);
     }
-    if (inByte == 's')
+    if (inByte == 's')//force save data to EEPROM
     {
       saveData(encoder.currentPosition, "currentPosition", preferences);
     }
-    if (inByte == 't')
+    if (inByte == 't')//Print all position data
     {
       Serial.println("Encoder current position: ");
       Serial.println(encoder.currentPosition);
