@@ -1,3 +1,14 @@
+/**
+ * @file displayOled.h
+ * @brief Header file for the DisplayOled class, which manages the OLED display.
+ *
+ * This file contains the declaration of the DisplayOled class and its member functions.
+ * The DisplayOled class is responsible for initializing the OLED display, displaying messages,
+ * and printing WiFi and position status.
+ *
+ */
+
+
 #ifndef DISPLAYOLED_H
 #define DISPLAYOLED_H
 #include <Arduino.h> // necessary header file for the "String" class

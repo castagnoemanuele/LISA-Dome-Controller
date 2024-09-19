@@ -1,3 +1,7 @@
+/// \file logo.h
+/// \brief This file contains the custom logo for the OLED display.
+
+
 #define splash1_width  82
 #define splash1_height 64
 

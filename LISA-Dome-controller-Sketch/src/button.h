@@ -13,10 +13,10 @@
 #include <WString.h>
 
 struct Button {
-	const uint8_t PIN;
-	uint32_t numberKeyPresses;
-	bool pressed; 
-	String message;
+	const uint8_t PIN; /// pin of the microcontroller connected to the button
+	uint32_t numberKeyPresses; ///unused counter 
+	bool pressed; ///actual status of the button
+	String message; ///message that gets displayed on the oled screen 
 };
 
 #endif

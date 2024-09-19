@@ -1,4 +1,4 @@
-/// @file
+/// @file encoder.h
 /// @brief This file contains the implementation of the Encoder class methods, including functions to check the encoder position,
 /// update the dome position, count the number of ticks for a full rotation, and save data to the EEPROM.
 

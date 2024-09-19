@@ -1,4 +1,19 @@
-
+/**
+ * @file encoder.cpp
+ * @brief This file contains the implementation of functions to handle the encoder data, update the position of the dome, reset the position, count ticks for a full rotation, convert ticks to degrees, and save data to EEPROM.
+ * 
+ * The functions included are:
+ * - checkEncoder(Encoder& encoder1)
+ * - updatePosition(Encoder& encoder1)
+ * - resetPosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch)
+ * - countTicksFullRotation(Encoder& encoder1, Button& resetButton, Button& limitSwitch, Preferences& preferences)
+ * - convertTicksToDegrees(int ticks, Encoder& encoder1)
+ * - saveData(int data, const char *address, Preferences& preferences)
+ * 
+ * These functions are used to manage the state and position of the encoder, update the dome's position, reset the dome's position, count the number of ticks for a full rotation, convert ticks to degrees, and save data to EEPROM.
+ * 
+ * 
+ */
 #include "config.h"
 #include "encoder.h"
 #include <Preferences.h>
@@ -119,10 +134,11 @@ void resetPosition(Encoder& encoder1, Button& resetButton, Button& limitSwitch){
     }
     delay(100);
   }
-  
+  //when we reach position zero the motor gets shut off
   digitalWrite(S1_PIN,LOW);
   digitalWrite(S2_PIN,LOW);
   Serial.println("Dome has returned to position 0.");
+  //Update current position information
   encoder1.currentPosition = 0;
   encoder1.currentDegrees = convertTicksToDegrees(encoder1.currentPosition, encoder1);
 

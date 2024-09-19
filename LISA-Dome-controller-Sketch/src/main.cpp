@@ -24,23 +24,25 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET); //init
 DisplayOled displayOled;
 
 
-Button bttReset = {BTT_RST, 0, false,"RESET"};
+Button bttReset = {BTT_RST, 0, false,"RESET"};///onboard button to reset the dome's position
+Button bttExternalReset = {BTT_EXT_RST, 0, false,"RESET"}; ///external button to reset the dome's position
 Button bttClockwise = {BTT_CW, 0, false,"MANUAL CW"};
 Button bttCounterClockwise = {BTT_CCW, 0, false,"MANUAL CCW"};
 Button limitSwitch = {BTT_END, 0, false, "END REACHED"};
 
 
 bool needUpdate = false; //flag to update the display only when the button is pressed
+static bool commandsPrinted = false; //bool for user interface commands
+
 /// @brief Interrupt Routine handler, sets .pressed attribute according to the reading
 /// @return 
 void IRAM_ATTR bttClick() {
- 
-    bttReset.pressed = digitalRead(BTT_RST);
-    bttClockwise.pressed = digitalRead(BTT_CW);
-    bttCounterClockwise.pressed = digitalRead(BTT_CCW);
-    limitSwitch.pressed = !digitalRead(BTT_END); //opposite because it is active when low
-    needUpdate= true;
-  
+  bttReset.pressed = digitalRead(BTT_RST);
+  bttExternalReset.pressed = digitalRead(BTT_EXT_RST);
+  bttClockwise.pressed = digitalRead(BTT_CW);
+  bttCounterClockwise.pressed = digitalRead(BTT_CCW);
+  limitSwitch.pressed = !digitalRead(BTT_END); //opposite because it is active when low
+  needUpdate= true;
 }
 
 
@@ -64,50 +66,6 @@ void IRAM_ATTR onTimerTelescope(){
 }
 
 
-
-
-
-void handleRoot() {
-  server.send(200, "text/plain", "Ready");
-}
-void handleGet() {
-  if (server.hasArg("data")) {
-    String data = server.arg("data");
-
-      if (data.toInt()!=0)
-      {
-        displayOled.displayMessage(data, display);
-        int degrees = data.toInt();
-      }
-      Serial.println("Data: " + data);
-    
-
-    //if the data has changed in comparison to the one before and it is a string
-    if (displayOled.currentData!=data){
-      displayOled.currentData = data;
-      if (data.toInt()==0)
-      {
-        displayOled.displayMessage(data,display);
-      }
-    } 
-    server.send(200, "text/plain", "Data Received");
-  }
-}
-void handlePost() {
-  server.send(200, "text/plain", "Processing Data");
-}
-void handleUpload() {
-  HTTPUpload& upload = server.upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    Serial.println("Receiving data:");
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    Serial.write(upload.buf, upload.currentSize);
-  } else if (upload.status == UPLOAD_FILE_END) {
-    server.send(200, "text/plain", "Data: ");
-  }
-}
-
-
 void setup()
 {
   ////////////////////////SERIAL COMMUNICATION INIT/////////////////////
@@ -116,17 +74,20 @@ void setup()
   /////////////////BUTTON/PIN INITIALIZATION////////////////////////////
   pinMode(LED_BUILTIN, OUTPUT);      // set the LED pin mode
   pinMode (bttReset.PIN, INPUT_PULLDOWN);
+  pinMode (bttExternalReset.PIN, INPUT_PULLDOWN);
   pinMode (bttClockwise.PIN, INPUT_PULLDOWN);
   pinMode (bttCounterClockwise.PIN, INPUT_PULLDOWN);
   pinMode (limitSwitch.PIN, INPUT_PULLUP);
   pinMode (S1_PIN, OUTPUT);
   pinMode (S2_PIN,OUTPUT);
+  digitalWrite(S1_PIN, LOW);
+  digitalWrite(S2_PIN, LOW);
   
   attachInterrupt (limitSwitch.PIN, bttClick, FALLING);
   attachInterrupt (bttReset.PIN, bttClick, CHANGE);
   attachInterrupt (bttClockwise.PIN, bttClick, CHANGE);
   attachInterrupt (bttCounterClockwise.PIN, bttClick, CHANGE);
-  
+  attachInterrupt (bttExternalReset.PIN, bttClick, CHANGE);
   /////////////////////////ENCODER PINS INITIALIZATION////////////////////////////////
   pinMode(ENCODER1, INPUT_PULLUP);
   pinMode(ENCODER2, INPUT_PULLUP);
@@ -170,10 +131,7 @@ void setup()
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-    server.on("/", handleRoot);
-    server.on("/get", HTTP_GET, handleGet);
-    server.on("/post", HTTP_POST, handlePost, handleUpload);
-    server.begin();
+    
   }
   else{displayOled.FirstRow="no Wifi";}
   
@@ -210,6 +168,8 @@ void setup()
   timerAlarmWrite(timerTelescope, 100000, true); //setting a timer to check the telescope position every 10 seconds
   //timerAlarmEnable(timerTelescope); //Just Enable the timer
 
+  
+
 }
 
 void loop()
@@ -224,7 +184,7 @@ void loop()
   }
   ////////////////////////////MANUAL CONTROL///////////////////////////
   //when the reset button is pressed, the motor starts spinning clockwise until the limit switch stops it
-  if (bttReset.pressed)
+  if (bttReset.pressed || bttExternalReset.pressed)
   {
     displayOled.displayMessage(bttReset.message,display);
     resetPosition(encoder, bttReset, limitSwitch);
@@ -284,6 +244,18 @@ void loop()
 
   
   ////////////////////////////Serial terminal interface to test functions////////////////////////
+  if (!commandsPrinted) {
+    Serial.println("\nAvailable commands:");
+    Serial.println("p: check telescope position");
+    Serial.println("r: reset position");
+    Serial.println("c: count ticks for a full rotation");
+    Serial.println("s: save data to EEPROM");
+    Serial.println("t: print position data on serial");
+    Serial.println("z: force update of position data on display");
+    Serial.println("w: display message test");
+    Serial.println("g: save full rotation data to EEPROM");
+    commandsPrinted = true;
+  }
   if (Serial.available() > 0)
   {
     char inByte = Serial.read();
@@ -316,10 +288,6 @@ void loop()
       Serial.println("Telescope position: ");
       Serial.println(LISA.getTelescopePosition());
     }
-    if(inByte == 'x')
-    {
-      displayOled.printPositionStatus(display, encoder, LISA);
-    }
     if (inByte == 'z')
     {
       Serial.println("Updating display position");
@@ -332,6 +300,11 @@ void loop()
     }
     if (inByte== 'g'){
       saveData(360,"fullRotation",preferences);
+    }
+    else
+    {
+      Serial.println("Command not recognized");
+      commandsPrinted = false;
     }
   }
 }

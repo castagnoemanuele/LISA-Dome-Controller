@@ -1,3 +1,4 @@
+
 /**
  * @file displayOled.cpp
  * @brief Implementation of the DisplayOled class for managing the OLED display.
@@ -73,7 +74,20 @@ void DisplayOled::displayMessage(String message, Adafruit_SSD1306& display) {
 }
 
 
-
+/**
+ * @brief Initializes the OLED display and shows the initial screen.
+ * 
+ * This method initializes the OLED display, shows a custom logo, and updates the display
+ * with the current WiFi status and the telescope position. It sets up the I2C communication,
+ * initializes the display with the Adafruit library, and displays the initial content.
+ * 
+ * @param display The Adafruit_SSD1306 display object. 
+ * @param encoder The Encoder object used to get the current position of the telescope.
+ * @param LISA The Telescope object used to get the target position of the telescope.
+ * 
+ * @note This method must be called before any other display-related methods to ensure
+ * the display is properly initialized.
+ */
 void DisplayOled::initDisplay(Adafruit_SSD1306& display, Encoder& encoder, Telescope& LISA){
     ////////////////////////OLED INITIALIZATION////////////////////////////
   Wire.begin(SDA_PIN, SCL_PIN); 

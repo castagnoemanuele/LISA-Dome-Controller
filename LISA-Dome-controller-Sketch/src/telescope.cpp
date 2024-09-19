@@ -19,16 +19,15 @@ int Telescope::getTelescopePosition() {
 /// Function to convert Right Ascension from HH:MM:SS format to degrees
 int Telescope::convertRA(char* ra) {
   int hours, minutes, seconds;
+  //separate the string into the respective parts
   sscanf(ra, "%d:%d:%d", &hours, &minutes, &seconds);
-
+  //print on the serial the result
   Serial.print("Hours: ");
   Serial.println(hours);
   Serial.print("Minutes: ");
   Serial.println(minutes);
   Serial.print("Seconds: ");
   Serial.println(seconds);
-
-
   // Convert hours, minutes, and seconds to degrees
   int degrees = hours * 15 + minutes * 0.25 + seconds * 0.00416667;
   Serial.print("Degrees: ");
@@ -50,15 +49,15 @@ void Telescope::checkTelescopePosition() {
     
     // Listen on the Serial1 for the answer and save it
     char byte[8] = {0};
-    int counter =0; //used to exit from the next loop
+    int timeoutCounter =0; //used to exit from the next loop
     do {
       Serial.println("Waiting for telescope position");
       
       delay(1000);
-      counter++;
+      timeoutCounter++;
 
-      
-      if(counter >= 10){
+  
+      if(timeoutCounter >= 10){
         Serial.println("Telescope not responding");
         break;
       }
