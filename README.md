@@ -1,6 +1,6 @@
 # LISA-Dome-Controller
 
-This repository contains the project of the controller system for the LISA observatory, located in Genoa. The old controller board was defective and needed to be replaced. THe system is composed of three main sub-systems:
+This repository contains the project of the controller system for the LISA observatory, located in Genoa. The old controller board was defective and needed to be replaced, and by doing that the system was also modernized and updated to support, for example, the WiFi connection. The system is composed of three main sub-systems:
 * Telescope
 * Motor system
 * Control system
@@ -12,12 +12,42 @@ The motor system is composed of three parts:
 * End switch: a simple switch that gets closed at a certain position, which will be referred as "position zero" from now on.
 The only modification done to this part of the system was a RC circuit connected in parallel with the end switch to filter out noise that was causing problems (ghost change of state of the end switch).
 
-##Controller system
+
+## Controller system
 Composed of four parts:
-* Two 12V power supplies, one for the motor and one for the controller board
+* Two 12V power supplies, one for the motor and one for the Control system
 * The controller board
 * The relay board
 * The external interface
+
+### Relay board
+This board has been developed for the purpose of powering the 12V motor. In needs to be able to switch the direction, so two SPDT relays have been used to form an h-bridge. The microcontroller drives the relays throught two npn transistors, and two LEDs have been added to signal which relay is active. The connections are the following:
+| PIN | Description|
+| ----|------------|
+|S1   |Selector pin for relay 1, when HIGH turns the coil of relay 1 on|
+|S2   |Selector pin for relay 2, when HIGH turns the coil of relay 2 on|
+|GND  |Ground, connected to the gnd of the step down on the control board (note that it is isolated from the 12V part of the circuit) 
+|5V   | Connected to the output of the step down on the control board
+|GND(High power part)|Connected to the motor power supply|
+|12V | Connected to the motor power supply|
+|MOTOR| connection to the motor
+
+The board was custom made using EasyEda and printed by JLCPCB. the PCB has copper traces wide and thick enough to support more than 5A of current. Schematics are avaiable on the apposite folder of this repo.
+
+#### Components of the Relay Board
+* 2* RT114005 SPDT relays
+* 2* 2N2222 transistors
+* 2*220 Ohm Resistor
+* 2*1KOhm Resistor
+* 2* Flyback diode
+* Screw terminal connectors
+
+
+
+### Controller board
+The controller board hosts the microcontroller and all the interfaces it needs to check the sensors and control the other devices in the system. it also hosts three buttons, which have the same functionality as the ones in the external interface. The microcontroller is an ESP
+
+The main connections are made in the 
 
 
 
