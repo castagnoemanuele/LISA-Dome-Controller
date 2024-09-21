@@ -4,6 +4,8 @@ This repository contains the project of the controller system for the LISA obser
 * Telescope
 * Motor system
 * Control system
+![Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/System%20Diagram.png)
+
 
 ## Motor system
 The motor system is composed of three parts:
