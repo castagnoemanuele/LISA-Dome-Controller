@@ -4,6 +4,8 @@ This repository contains the project of the controller system for the LISA obser
 * Telescope
 * Motor system
 * Control system
+![Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/System%20Diagram.png)
+
 
 ## Motor system
 The motor system is composed of three parts:
@@ -45,9 +47,10 @@ The board was custom made using EasyEda and printed by JLCPCB. the PCB has coppe
 
 
 ### Controller board
-The controller board hosts the microcontroller and all the interfaces it needs to check the sensors and control the other devices in the system. it also hosts three buttons, which have the same functionality as the ones in the external interface. The microcontroller is an ESP
-
-The main connections are made in the 
+The controller board hosts the microcontroller and all the interfaces it needs to check the sensors and control the other devices in the system. It also hosts three buttons, which have the same functionality as the ones in the external interface. The microcontroller is a WEMOS ESP32-S2 mini, chosen for the low cost and WiFi support.
+the power supply that was present in the electrical box had an output of 12V DC, so a variable step down converter was added, and it is set to 5V and connected to the Vin pin of the microcontroller. 
+The I²C interface is powered from the 3.3V pin of the microcontroller and has two 10K pullup resistors, on the back of the perf board.
+All the connections are reported in the schematic on the apposite folder
 
 
 
@@ -56,10 +59,3 @@ The main connections are made in the
 
 ## Components
 ![Immagine WhatsApp 2023-11-21 ore 09 59 53_9c08ac0d](https://github.com/castagnoemanuele/LISA-Dome-Controller/assets/100867215/487692d3-7d65-4a4e-9536-0691e81c85d1)
-
-* Lolin ESP32 S2 Mini
-* Controller Board
-* Relay Board
-* I2C Oled Display
-	
-
