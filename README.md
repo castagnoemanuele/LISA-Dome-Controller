@@ -1,14 +1,17 @@
 # LISA-Dome-Controller
-
-This repository contains the project of the controller system for the LISA observatory, located in Genoa. The old controller board was defective and needed to be replaced, and by doing that the system was also modernized and updated to support, for example, the WiFi connection. The system is composed of three main sub-systems:
+![Observatory](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/LISA_Observatory)
+This repository contains the project of the controller system for the LISA observatory, located in Genoa. The old controller board was defective and needed to be replaced, and by doing that the system was also modernized and updated to support, for example, the WiFi connection. 
+![Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/System%20Diagram.png)
+The system is composed of three main sub-systems:
 * Telescope
 * Motor system
 * Control system
-![Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/System%20Diagram.png)
+
 
 
 ## Motor system
 ![Motor System](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/MotorSubSystem.png)
+
 The motor system is composed of three parts:
 1. End switch: a simple switch that gets closed at a certain position, which will be referred as "position zero" from now on.
 2. Encoder: has three pins (ENCODER1, ENCODER2, ENCODER3) plus a common one. Each one is activated every third of a rotation of the motor
@@ -16,7 +19,9 @@ The motor system is composed of three parts:
 
 The only modification done to this part of the system was a RC circuit connected in parallel with the end switch to filter out noise that was causing problems (ghost change of state of the end switch).
 The rotative encoder functioning is is simplified in the following animation:
-![Encoder_rotation](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/Encoder diagram.gif)
+
+![Encoder_rotation](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/EncoderDiagram.gif)
+
 In the way it works it is more similar to a rotation counter, but given it's function it will be called encoder.
 
 
