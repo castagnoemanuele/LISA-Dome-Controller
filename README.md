@@ -1,5 +1,6 @@
 # LISA-Dome-Controller
-![Observatory](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/LISA_Observatory)
+![Observatory](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/LISA_Observatory.jpg)
+
 This repository contains the project of the controller system for the LISA observatory, located in Genoa. The old controller board was defective and needed to be replaced, and by doing that the system was also modernized and updated to support, for example, the WiFi connection. 
 ![Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/System%20Diagram.png)
 The system is composed of three main sub-systems:
