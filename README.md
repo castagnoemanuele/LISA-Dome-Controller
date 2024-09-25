@@ -8,11 +8,16 @@ This repository contains the project of the controller system for the LISA obser
 
 
 ## Motor system
+![Motor System](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/MotorSubSystem.png)
 The motor system is composed of three parts:
-* 12V DC motor (60w power draw)
-* Encoder: has three pins (ENCODER1, ENCODER2, ENCODER3) plus a common one. Each one is activated every third of a rotation of the motor
-* End switch: a simple switch that gets closed at a certain position, which will be referred as "position zero" from now on.
+1. End switch: a simple switch that gets closed at a certain position, which will be referred as "position zero" from now on.
+2. Encoder: has three pins (ENCODER1, ENCODER2, ENCODER3) plus a common one. Each one is activated every third of a rotation of the motor
+3. 12V DC motor (60w power draw)
+
 The only modification done to this part of the system was a RC circuit connected in parallel with the end switch to filter out noise that was causing problems (ghost change of state of the end switch).
+The rotative encoder functioning is is simplified in the following animation:
+![Encoder_rotation](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/Encoder diagram.gif)
+In the way it works it is more similar to a rotation counter, but given it's function it will be called encoder.
 
 
 ## Controller system
@@ -47,15 +52,28 @@ The board was custom made using EasyEda and printed by JLCPCB. the PCB has coppe
 
 
 ### Controller board
+![Controller Board Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/ControllerBoard.png)
+
 The controller board hosts the microcontroller and all the interfaces it needs to check the sensors and control the other devices in the system. It also hosts three buttons, which have the same functionality as the ones in the external interface. The microcontroller is a WEMOS ESP32-S2 mini, chosen for the low cost and WiFi support.
 the power supply that was present in the electrical box had an output of 12V DC, so a variable step down converter was added, and it is set to 5V and connected to the Vin pin of the microcontroller. 
 The I²C interface is powered from the 3.3V pin of the microcontroller and has two 10K pullup resistors, on the back of the perf board.
-All the connections are reported in the schematic on the apposite folder
+All the connections are reported in the schematic on the apposite folder. The pinscan be described as it follows:
+
+| PIN | Description|
+| ----|------------|
+|5V| Connection to the Vin pin of the MCU and the OUT+ of the buck converter|
+|GND| Ground =0|
+|S2 | Connected to the S2 Pin of the relayboard. When high activates relay 2. It is also connected to the External S2 Button of the physical interface|
+|S1 | Connected to the S2 Pin of the relayboard. When high activates relay 1. It is also connected to the External S1 Button of the physical interface|
+|EXT_RST| Connected to the reset Button of the external interface
+|Encoder1,2,3| Connected to the encoder pins (in the motor system|
+|TELESC_RX| Connected to the RX pin of the serial to RS232 Adapter|
+|TELESC_TX| Connected to the TX pin of the serial to RS232 Adapter|
+|END_SWITCH| Connected to the end switch in the motor system!
+|3.3V| Connected to the 3.3V pin of the ESP32|
+|IN+| Positive Input pin for the buck converter. In the system connected to a 12V PSU|
+|IN-| Negative pin for the buck converter. In the system connected to a 12V PSU|
 
 
 
 
-
-
-## Components
-![Immagine WhatsApp 2023-11-21 ore 09 59 53_9c08ac0d](https://github.com/castagnoemanuele/LISA-Dome-Controller/assets/100867215/487692d3-7d65-4a4e-9536-0691e81c85d1)
