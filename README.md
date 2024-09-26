@@ -2,6 +2,7 @@
 ![Observatory](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/LISA_Observatory.jpg)
 
 This repository contains the project of the controller system for the LISA observatory, located in Genoa. The old controller board was defective and needed to be replaced, and by doing that the system was also modernized and updated to support, for example, the WiFi connection. 
+
 ![Diagram](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/System%20Diagram.png)
 The system is composed of three main sub-systems:
 * Telescope
@@ -81,5 +82,17 @@ All the connections are reported in the schematic on the apposite folder. The pi
 |IN-| Negative pin for the buck converter. In the system connected to a 12V PSU|
 
 
+### External interface
+![External Interface](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/PhysicalInterface.jpg)
+
+The buttons present on the controller board are not avaiable when the electrical box is closed, so to be able to control the Dome posision manually it was necessary to connect the (already present) external keypad and add the external display with a 3d printed enclosure, which was posted on [Thingiverse](https://www.thingiverse.com/thing:3080488) by SteveTecx.
+
+## Complete system 
+Here is a more complete overview on the contents of the elecrical box:
+
+![External Interface](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/CompleteSystem.png)
+
+## Notes
+The .ino file in the simulator folder was used to simulate the behaviour of the dome to program the firmware outside of the dome. More details are available in my thesis pdf file in the documents folder.
 
 
