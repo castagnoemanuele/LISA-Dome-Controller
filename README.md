@@ -28,11 +28,18 @@ In the way it works it is more similar to a rotation counter, but given it's fun
 
 
 ## Controller system
+
 Composed of four parts:
 * Two 12V power supplies, one for the motor and one for the Control system
 * The controller board
 * The relay board
 * The external interface
+
+Here is a more complete overview on the contents of the electrical box:
+
+![Controller overview](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/CompleteSystem.png)
+
+
 
 ### Relay board
 This board has been developed for the purpose of powering the 12V motor. In needs to be able to switch the direction, so two SPDT relays have been used to form an h-bridge. The microcontroller drives the relays throught two npn transistors, and two LEDs have been added to signal which relay is active. The connections are the following:
@@ -87,10 +94,6 @@ All the connections are reported in the schematic on the apposite folder. The pi
 
 The buttons present on the controller board are not avaiable when the electrical box is closed, so to be able to control the Dome posision manually it was necessary to connect the (already present) external keypad and add the external display with a 3d printed enclosure, which was posted on [Thingiverse](https://www.thingiverse.com/thing:3080488) by SteveTecx.
 
-## Complete system 
-Here is a more complete overview on the contents of the elecrical box:
-
-![External Interface](https://github.com/castagnoemanuele/LISA-Dome-Controller/blob/main/Assets/CompleteSystem.png)
 
 ## Notes
 The .ino file in the simulator folder was used to simulate the behaviour of the dome to program the firmware outside of the dome. More details are available in my thesis pdf file in the documents folder.
